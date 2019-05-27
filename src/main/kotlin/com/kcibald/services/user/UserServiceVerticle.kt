@@ -1,6 +1,7 @@
 package com.kcibald.services.user
 
 import com.kcibald.services.user.dao.DBAccess
+import com.kcibald.services.user.handlers.AuthenticationInterface
 import io.vertx.core.Vertx
 import io.vertx.core.logging.LoggerFactory
 import io.vertx.kotlin.core.deployVerticleAwait
@@ -25,6 +26,9 @@ class UserServiceVerticle : CoroutineVerticle() {
         dbaccess = DBAccess(this)
         logger.info("initalizing database access")
         dbaccess.initialize()
+
+        AuthenticationInterface(this)
+            .bind(vertx.eventBus())
     }
 
     internal lateinit var dbaccess: DBAccess
