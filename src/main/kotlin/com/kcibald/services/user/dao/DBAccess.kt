@@ -35,21 +35,21 @@ internal class DBAccess(verticle: UserServiceVerticle) {
         logger.info("DBAccess initialization complete")
     }
 
-    suspend fun getUserWithId(id: String): SafeUser? {
+    suspend fun getUserWithId(id: String): SafeUserInternal? {
         assert(id.length == 5)
         val query = JsonObject(Collections.singletonMap(userIdKey, id) as Map<String, Any>)
         val jsonObject = dbClient.findOneAwait(userCollectionName, query, JsonObject())
-        return jsonObject?.let(::SafeUser)
+        return jsonObject?.let(::SafeUserInternal)
     }
 
-    suspend fun getUserWithName(id: String): SafeUser? {
+    suspend fun getUserWithName(id: String): SafeUserInternal? {
         assert(id.length == 5)
         val query = JsonObject(Collections.singletonMap(userIdKey, id) as Map<String, Any>)
         val jsonObject = dbClient.findOneAwait(userCollectionName, query, JsonObject())
-        return jsonObject?.let(::SafeUser)
+        return jsonObject?.let(::SafeUserInternal)
     }
 
-    suspend fun getUserAndPasswordWithEmail(email: String): Pair<SafeUser, ByteArray>? {
+    suspend fun getUserAndPasswordWithEmail(email: String): Pair<SafeUserInternal, ByteArray>? {
         val query = json {
             obj(
                 emailKey to obj(
@@ -65,7 +65,7 @@ internal class DBAccess(verticle: UserServiceVerticle) {
         return dbClient
             .findOneAwait(userCollectionName, query, field)
             ?.let {
-                SafeUser(it) to Base64.getDecoder().decode(it.getString(passwordHashKey))
+                SafeUserInternal(it) to Base64.getDecoder().decode(it.getString(passwordHashKey))
             }
     }
 

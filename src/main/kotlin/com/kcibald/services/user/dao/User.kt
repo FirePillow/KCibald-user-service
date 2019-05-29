@@ -3,13 +3,18 @@ package com.kcibald.services.user.dao
 import com.kcibald.utils.ImmutableJsonObject
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
+import org.apache.commons.codec.binary.Hex
 import java.util.*
 
-internal class SafeUser(
+internal class SafeUserInternal(
     val jsonObject: ImmutableJsonObject
 ) {
     val user_id: String
-        get() = jsonObject.getString(userIdKey)
+        get() {
+            val id = jsonObject.getString("_id")
+            val hex = Hex.decodeHex(id)
+            return Base64.getUrlEncoder().encodeToString(hex)
+        }
 
     val user_name: String
         get() = jsonObject.getString(userNameKey)
@@ -25,13 +30,25 @@ internal class SafeUser(
         get() =
             jsonObject.getString(avatarFileKey)
 
+    fun unsafeExport(): JsonObject {
+        val copy = jsonObject.copy()
+        val uid = this.user_id
+        copy.remove("_id")
+        copy.put(userIdKey, uid)
+        return copy
+    }
+
 }
 
 internal inline class UserInternal(
     val jsonObject: ImmutableJsonObject
 ) {
     val user_id: String
-        get() = jsonObject.getString(userIdKey)
+        get() {
+            val id = jsonObject.getString("_id")
+            val hex = Hex.decodeHex(id)
+            return Base64.getUrlEncoder().encodeToString(hex)
+        }
 
     val user_name: String
         get() = jsonObject.getString(userNameKey)
@@ -121,15 +138,15 @@ internal inline class Authorities(
 ) {
     val native_roles: List<String>
         get() =
-             jsonObject
+            jsonObject
                 .getJsonArray(nativeRoleKey)
                 .map { it as String }
 
     val roleModels: List<String>
         get() =
-                jsonObject
-                    .getJsonArray(roleModelsKey)
-                    .map { it as String }
+            jsonObject
+                .getJsonArray(roleModelsKey)
+                .map { it as String }
 }
 
 internal const val userIdKey = "user_id"
