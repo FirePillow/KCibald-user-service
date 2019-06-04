@@ -1,0 +1,39 @@
+syntax = "proto3";
+package com.kcibald.services.user.proto;
+
+message AuthenticationRequest {
+    string user_name = 1;
+    string plain_password = 2;
+}
+
+message AuthenticationResponse {
+    oneof error {
+        string error_message = 1;
+    }
+    // if user is present, then it authentication successes
+    // user with role so that other services can cache roles
+    UserWithRole user = 2;
+    // if banned_info is present, then user is banned
+    oneof banned_info {
+        string message = 3;
+    }
+    // if neither user or banned_info is present,
+    // then it is invalid credential
+}
+
+message User {
+    string user_id = 1;
+    string user_name = 2;
+    string url_key = 3;
+    string signature = 4;
+    string avatar_key = 5;
+}
+
+message UserWithRole {
+    User user = 1;
+    Roles role = 2;
+}
+
+message Roles {
+    repeated string role = 1;
+}
