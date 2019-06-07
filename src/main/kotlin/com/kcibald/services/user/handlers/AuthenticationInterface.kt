@@ -1,6 +1,7 @@
 package com.kcibald.services.user.handlers
 
 import at.favre.lib.crypto.bcrypt.BCrypt
+import com.kcibald.services.user.MasterConfigSpec
 import com.kcibald.services.user.UserServiceVerticle
 import com.kcibald.services.user.coroutineHandler
 import com.kcibald.utils.d
@@ -15,14 +16,18 @@ internal class AuthenticationInterface(verticle: UserServiceVerticle) : ServiceI
     private val logger = LoggerFactory.getLogger(AuthenticationInterface::class.java)
 
     override suspend fun bind(eventBus: EventBus) {
-        val consumer = eventBus.consumer<JsonObject>("kcibald.user.authentication")
+        val eventBusAddress = verticle.parsedConfig[MasterConfigSpec.AuthenticationConfig.event_bus_name]
+        val consumer = eventBus.consumer<JsonObject>(eventBusAddress)
         consumer.coroutineHandler(verticle.vertx) {
             logger.d { "authentication inbound" }
             val request = it.body()
             val email: String = request["email"]
             val password: String = request["password"]
             logger.d { "accessing db for user with email $email" }
-            val dbResult = this@AuthenticationInterface.verticle.dbaccess.getUserAndPasswordWithEmail(email)
+
+            val dbResult =
+                this@AuthenticationInterface.verticle.dbaccess.getUserAndPasswordWithEmail(email)
+
             if (dbResult != null) {
                 logger.d { "user with email $email exists, checking password and authority" }
                 val (user, hash) = dbResult

@@ -1,5 +1,6 @@
 package com.kcibald.services.user.dao
 
+import com.kcibald.services.user.MasterConfigSpec
 import com.kcibald.services.user.UserServiceVerticle
 import com.kcibald.utils.immutable
 import io.vertx.core.json.JsonObject
@@ -14,7 +15,12 @@ import java.util.*
 
 internal class DBAccess(verticle: UserServiceVerticle) {
 
-    private val dbClient = MongoClient.createShared(verticle.vertx, verticle.dbConfig)
+    private val dbClient =
+        MongoClient.createShared(
+            verticle.vertx,
+            JsonObject(verticle.parsedConfig[MasterConfigSpec.db_config])
+        )
+
     private val logger = LoggerFactory.getLogger(DBAccess::class.java)
 
     private val userCollectionName = "kcibald-user"

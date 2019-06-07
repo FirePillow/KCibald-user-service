@@ -33,17 +33,7 @@ class UserServiceVerticle : CoroutineVerticle() {
 
     internal lateinit var dbaccess: DBAccess
 
-    internal val dbConfig by lazy {
-        val config = this.config
-        if (config.isEmpty) {
-            jsonObjectOf(
-                "mongo_uri" to "mongodb://localhost:27017"
-            )
-        } else config
-    }
-
-    internal val dId
-        get() = deploymentID
+    internal val parsedConfig = load(this.config)
 
     override suspend fun stop() {
         super.stop()
