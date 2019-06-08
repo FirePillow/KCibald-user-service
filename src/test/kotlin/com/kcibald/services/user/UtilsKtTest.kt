@@ -1,5 +1,6 @@
 package com.kcibald.services.user
 
+import com.kcibald.services.user.handlers.EmptyEventResult
 import io.vertx.core.AsyncResult
 import io.vertx.core.Handler
 import io.vertx.core.MultiMap
@@ -88,11 +89,12 @@ internal class UtilsKtTest {
             override fun setMaxBufferedMessages(maxBufferedMessages: Int) = throw IllegalAccessError()
 
         }
-        target.coroutineHandler(vertx) {
+        target.coroutineHandler(vertx) k@{
             context.verify {
                 assertEquals(answer, it.body())
                 context.completeNow()
             }
+            return@k EmptyEventResult
         }
         context.awaitCompletion(5, TimeUnit.SECONDS)
     }
