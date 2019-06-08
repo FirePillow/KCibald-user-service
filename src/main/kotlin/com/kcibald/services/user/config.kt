@@ -6,6 +6,10 @@ import io.vertx.core.json.JsonObject
 
 internal object MasterConfigSpec : ConfigSpec("") {
     val db_config by required<Map<String, Any>>()
+    val db_config_json by lazy {
+        JsonObject(it[db_config])
+    }
+
     val user_collection_name by optional("user-collection")
 
     internal object AuthenticationConfig : ConfigSpec("auth") {
@@ -14,8 +18,10 @@ internal object MasterConfigSpec : ConfigSpec("") {
 }
 
 
+const val default_resource_position = "config.json"
+
 internal fun load(additional: JsonObject) = Config { addSpec(MasterConfigSpec) }
-    .from.json.resource("config.json")
-    .from.map.hierarchical(additional.map)
-    .from.env()
-    .from.systemProperties()
+        .from.json.resource(default_resource_position)
+        .from.map.hierarchical(additional.map)
+        .from.env()
+        .from.systemProperties()

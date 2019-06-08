@@ -2,7 +2,7 @@ package com.kcibald.services.user.handlers
 
 import at.favre.lib.crypto.bcrypt.BCrypt
 import com.kcibald.services.user.MasterConfigSpec
-import com.kcibald.services.user.UserServiceVerticle
+import com.kcibald.services.user.SharedRuntimeData
 import com.kcibald.services.user.coroutineHandler
 import com.kcibald.utils.d
 import io.vertx.core.eventbus.EventBus
@@ -12,13 +12,13 @@ import io.vertx.kotlin.core.executeBlockingAwait
 import io.vertx.kotlin.core.json.get
 import io.vertx.kotlin.core.json.jsonObjectOf
 
-internal class AuthenticationInterface(verticle: UserServiceVerticle) : ServiceInterface(verticle) {
+internal class AuthenticationInterface(sharedRuntimeData: SharedRuntimeData) : ServiceInterface(sharedRuntimeData) {
     private val logger = LoggerFactory.getLogger(AuthenticationInterface::class.java)
 
     override suspend fun bind(eventBus: EventBus) {
-        val eventBusAddress = verticle.parsedConfig[MasterConfigSpec.AuthenticationConfig.event_bus_name]
+        val eventBusAddress = runtimeData.config[MasterConfigSpec.AuthenticationConfig.event_bus_name]
         val consumer = eventBus.consumer<JsonObject>(eventBusAddress)
-        consumer.coroutineHandler(verticle.vertx) {
+        consumer.coroutineHandler(runtimeData.vertx) {
             logger.d { "authentication inbound" }
             val request = it.body()
             val email: String = request["email"]
@@ -26,13 +26,13 @@ internal class AuthenticationInterface(verticle: UserServiceVerticle) : ServiceI
             logger.d { "accessing db for user with email $email" }
 
             val dbResult =
-                this@AuthenticationInterface.verticle.dbaccess.getUserAndPasswordWithEmail(email)
+                runtimeData.dbAccess.getUserAndPasswordWithEmail(email)
 
             if (dbResult != null) {
                 logger.d { "user with email $email exists, checking password and authority" }
                 val (user, hash) = dbResult
                 try {
-                    val result = verticle.vertx.executeBlockingAwait<BCrypt.Result> { future ->
+                    val result = runtimeData.vertx.executeBlockingAwait<BCrypt.Result> { future ->
                         try {
                             future.complete(BCrypt.verifyer().verify(password.toByteArray(), hash))
                         } catch (e: Throwable) {

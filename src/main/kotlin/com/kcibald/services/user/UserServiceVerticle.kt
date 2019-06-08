@@ -2,10 +2,11 @@ package com.kcibald.services.user
 
 import com.kcibald.services.user.dao.DBAccess
 import com.kcibald.services.user.handlers.AuthenticationInterface
+import com.kcibald.utils.i
+import com.uchuhimo.konf.Config
 import io.vertx.core.Vertx
 import io.vertx.core.logging.LoggerFactory
 import io.vertx.kotlin.core.deployVerticleAwait
-import io.vertx.kotlin.core.json.jsonObjectOf
 import io.vertx.kotlin.coroutines.CoroutineVerticle
 import kotlinx.coroutines.runBlocking
 
@@ -22,20 +23,38 @@ class UserServiceVerticle : CoroutineVerticle() {
     private val logger = LoggerFactory.getLogger(UserServiceVerticle::class.java)
 
     override suspend fun start() {
-        logger.info("user service launching, deployment Id: $deploymentID")
-        dbaccess = DBAccess(this)
-        logger.info("initalizing database access")
-        dbaccess.initialize()
+        logger.i { "user service launching, deployment Id: $deploymentID" }
 
-        AuthenticationInterface(this)
-            .bind(vertx.eventBus())
+        logger.i { "loading config" }
+        val config = load(super.config)
+        logger.i { "config loaded, ${config.toMap()}" }
+
+        logger.i { "initializing database" }
+        val dbaccess = DBAccess(this, config)
+        dbaccess.initialize()
+        logger.i { "database initialization complete" }
+
+        sharedRuntimeData = SharedRuntimeData(this, config, dbaccess, this.deploymentID)
+
+        logger.i { "binding services" }
+        AuthenticationInterface(sharedRuntimeData).bind(vertx.eventBus())
     }
 
     internal lateinit var dbaccess: DBAccess
 
-    internal val parsedConfig = load(this.config)
+    internal lateinit var sharedRuntimeData: SharedRuntimeData
 
     override suspend fun stop() {
         super.stop()
     }
+}
+
+internal class SharedRuntimeData(
+    val verticle: UserServiceVerticle,
+    val config: Config,
+    val dbAccess: DBAccess,
+    val deploymentID: String
+) {
+    val vertx: Vertx
+        get() = verticle.vertx
 }
