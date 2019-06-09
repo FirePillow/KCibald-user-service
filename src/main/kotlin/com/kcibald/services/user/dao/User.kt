@@ -73,23 +73,6 @@ internal inline class UserInternal(
     val emails: Emails
         get() = Emails(jsonObject.getJsonArray(emailKey))
 
-    val nativeRole: List<String>
-        get() {
-            return jsonObject
-                .getJsonObject(authoritiesKey)
-                .getJsonArray(nativeRoleKey)
-                .map {
-                    it as String
-                }
-        }
-
-    val roleModels: List<String>
-        get() {
-            return jsonObject
-                .getJsonObject(authoritiesKey)
-                .getJsonArray(roleModelsKey)
-                .map { it as String }
-        }
 }
 
 internal inline class Emails(
@@ -133,32 +116,12 @@ internal inline class EmailConfig(
         get() = jsonObject.getBoolean(emailVerifiedKey)
 }
 
-internal inline class Authorities(
-    val jsonObject: ImmutableJsonObject
-) {
-    val native_roles: List<String>
-        get() =
-            jsonObject
-                .getJsonArray(nativeRoleKey)
-                .map { it as String }
-
-    val roleModels: List<String>
-        get() =
-            jsonObject
-                .getJsonArray(roleModelsKey)
-                .map { it as String }
-}
-
 internal const val userIdKey = "user_id"
 internal const val userNameKey = "user_name"
 internal const val urlKeyKey = "url_key"
 internal const val signatureKey = "signature"
 internal const val avatarFileKey = "avatar_file"
 internal const val passwordHashKey = "password"
-
-internal const val authoritiesKey = "authorities"
-internal const val nativeRoleKey = "native_role"
-internal const val roleModelsKey = "role_models"
 
 internal const val emailKey = "email"
 internal const val typeKey = "type"
