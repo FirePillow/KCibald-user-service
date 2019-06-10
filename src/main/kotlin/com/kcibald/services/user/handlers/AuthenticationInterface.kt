@@ -26,16 +26,16 @@ internal class AuthenticationInterface(sharedRuntimeData: SharedRuntimeData) : S
             val password: String = request["password"]
 
             logger.d { "accessing db for user with email $email" }
-          
+
             val dbResult =
                 runtimeData.dbAccess.getUserAndPasswordWithEmail(email)
-          
+
             if (dbResult != null) {
                 logger.d { "user with email $email exists, checking password and authority" }
                 val (user, hash) = dbResult
                 try {
-                    val result = verticle.vertx.executeBlockingAwait<BCrypt.Result> { future ->
-                        //                        exception will be catch from vertx
+                    val result = runtimeData.vertx.executeBlockingAwait<BCrypt.Result> { future ->
+                        // exception will be catch from vertx
                         future.complete(
                             BCrypt.verifyer().verify(password.toByteArray(), hash)
                         )
