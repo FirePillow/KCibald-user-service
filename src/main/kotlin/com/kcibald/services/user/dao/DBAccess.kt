@@ -1,7 +1,9 @@
 package com.kcibald.services.user.dao
 
+import com.kcibald.services.user.MasterConfigSpec
 import com.kcibald.services.user.UserServiceVerticle
 import com.kcibald.utils.immutable
+import com.uchuhimo.konf.Config
 import io.vertx.core.json.JsonObject
 import io.vertx.core.logging.LoggerFactory
 import io.vertx.ext.mongo.MongoClient
@@ -12,14 +14,19 @@ import io.vertx.kotlin.ext.mongo.findOneAwait
 import io.vertx.kotlin.ext.mongo.getCollectionsAwait
 import java.util.*
 
-internal class DBAccess(verticle: UserServiceVerticle) {
+internal class DBAccess(verticle: UserServiceVerticle, config: Config) {
 
-    private val dbClient = MongoClient.createShared(verticle.vertx, verticle.dbConfig)
+    private val dbClient =
+        MongoClient.createShared(
+            verticle.vertx,
+            config[MasterConfigSpec.db_config_json]
+        )
+
     private val logger = LoggerFactory.getLogger(DBAccess::class.java)
 
-    private val userCollectionName = "kcibald-user"
+    private val userCollectionName = config[MasterConfigSpec.user_collection_name]
 
-    private val userFieldJson = json {
+    private val userFieldProjection = json {
         obj(
             userIdKey to 1,
             userNameKey to 1,
@@ -52,16 +59,14 @@ internal class DBAccess(verticle: UserServiceVerticle) {
     suspend fun getUserAndPasswordWithEmail(email: String): Pair<SafeUserInternal, ByteArray>? {
         val query = json {
             obj(
-                emailKey to obj(
-                    emailAddressKey to email
-                )
+                "$emailKey.$emailAddressKey" to email
             )
         }
         val field = (json {
             obj(
                 passwordHashKey to 1
             )
-        }).mergeIn(userFieldJson)
+        }).mergeIn(userFieldProjection)
         return dbClient
             .findOneAwait(userCollectionName, query, field)
             ?.let {
