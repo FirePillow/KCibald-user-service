@@ -14,6 +14,7 @@ import io.vertx.kotlin.core.json.jsonObjectOf
 
 internal class AuthenticationInterface(sharedRuntimeData: SharedRuntimeData) : ServiceInterface(sharedRuntimeData) {
     private val logger = LoggerFactory.getLogger(AuthenticationInterface::class.java)
+    private val DBFailureEventResult = FailureEventResult(503, "database failure")
 
     override suspend fun bind(eventBus: EventBus) {
         val eventBusAddress = runtimeData.config[MasterConfigSpec.AuthenticationConfig.event_bus_name]
@@ -23,25 +24,25 @@ internal class AuthenticationInterface(sharedRuntimeData: SharedRuntimeData) : S
             val request = it.body()
             val email: String = request["email"]
             val password: String = request["password"]
-            logger.d { "accessing db for user with email $email" }
 
+            logger.d { "accessing db for user with email $email" }
+          
             val dbResult =
                 runtimeData.dbAccess.getUserAndPasswordWithEmail(email)
-
+          
             if (dbResult != null) {
                 logger.d { "user with email $email exists, checking password and authority" }
                 val (user, hash) = dbResult
                 try {
-                    val result = runtimeData.vertx.executeBlockingAwait<BCrypt.Result> { future ->
-                        try {
-                            future.complete(BCrypt.verifyer().verify(password.toByteArray(), hash))
-                        } catch (e: Throwable) {
-                            future.fail(e)
-                        }
+                    val result = verticle.vertx.executeBlockingAwait<BCrypt.Result> { future ->
+                        //                        exception will be catch from vertx
+                        future.complete(
+                            BCrypt.verifyer().verify(password.toByteArray(), hash)
+                        )
                     }!!
                     if (result.verified) {
                         logger.d { "user with email $email have input correct password, continue" }
-                        it.reply(
+                        return@coroutineHandler JsonEventResult(
                             jsonObjectOf(
                                 "verified" to true,
                                 "user" to user.jsonObject
@@ -50,13 +51,13 @@ internal class AuthenticationInterface(sharedRuntimeData: SharedRuntimeData) : S
                     }
                 } catch (e: Exception) {
                     logger.info("authentication failed for user ${user.user_id}, exception $e", e)
-                    it.reply(jsonObjectOf("error" to true))
+                    return@coroutineHandler JsonEventResult(jsonObjectOf("error" to true))
                 }
             }
-            logger.d { "user $email failed to authenticate" }
-            it.reply("verified" to false)
-        }
 
+            logger.d { "user $email failed to authenticate" }
+            return@coroutineHandler JsonEventResult(jsonObjectOf("verified" to false))
+        }
     }
 
 }

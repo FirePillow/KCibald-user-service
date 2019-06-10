@@ -26,7 +26,7 @@ internal class DBAccess(verticle: UserServiceVerticle, config: Config) {
 
     private val userCollectionName = config[MasterConfigSpec.user_collection_name]
 
-    private val userFieldJson = json {
+    private val userFieldProjection = json {
         obj(
             userIdKey to 1,
             userNameKey to 1,
@@ -59,16 +59,14 @@ internal class DBAccess(verticle: UserServiceVerticle, config: Config) {
     suspend fun getUserAndPasswordWithEmail(email: String): Pair<SafeUserInternal, ByteArray>? {
         val query = json {
             obj(
-                emailKey to obj(
-                    emailAddressKey to email
-                )
+                "$emailKey.$emailAddressKey" to email
             )
         }
         val field = (json {
             obj(
                 passwordHashKey to 1
             )
-        }).mergeIn(userFieldJson)
+        }).mergeIn(userFieldProjection)
         return dbClient
             .findOneAwait(userCollectionName, query, field)
             ?.let {
