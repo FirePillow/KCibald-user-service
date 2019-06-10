@@ -1,0 +1,9 @@
+{
+  "db_config": {
+    "c": "d"
+  },
+  "user_collection_name": "collection_name",
+  "auth": {
+    "event_bus_name": "event_bus"
+  }
+}

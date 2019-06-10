@@ -1,5 +1,6 @@
 package com.kcibald.services.user.handlers
 
+import com.kcibald.services.user.SharedRuntimeData
 import com.kcibald.services.user.UserServiceVerticle
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.eventbus.EventBus
@@ -7,7 +8,7 @@ import io.vertx.core.eventbus.Message
 import io.vertx.core.json.JsonObject
 
 internal abstract class ServiceInterface(
-    protected val verticle: UserServiceVerticle
+    protected val runtimeData: SharedRuntimeData
 ) {
     abstract suspend fun bind(eventBus: EventBus)
 }

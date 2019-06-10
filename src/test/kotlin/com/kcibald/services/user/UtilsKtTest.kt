@@ -21,7 +21,7 @@ internal class UtilsKtTest {
     @Test
     fun genRandomString() {
         val string = genRandomString(5)
-        println(string)
+        println("is this random? $string")
         assertEquals(string.length, 5)
     }
 
