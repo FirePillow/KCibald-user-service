@@ -19,9 +19,20 @@ internal object MasterConfigSpec : ConfigSpec("") {
 
 
 const val default_resource_position = "config.json"
+const val custom_config_file_key = "config_file"
 
-internal fun load(additional: JsonObject) = Config { addSpec(MasterConfigSpec) }
+internal fun load(additional: JsonObject): Config {
+    var config = Config { addSpec(MasterConfigSpec) }
         .from.json.resource(default_resource_position)
+
+    if (additional.containsKey(custom_config_file_key)) {
+        config = config.from.json.file(additional.getString(custom_config_file_key))
+    }
+
+    config = config
         .from.map.hierarchical(additional.map)
         .from.env()
         .from.systemProperties()
+
+    return config
+}
