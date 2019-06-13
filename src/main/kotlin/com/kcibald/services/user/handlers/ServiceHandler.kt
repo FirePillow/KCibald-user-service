@@ -44,3 +44,13 @@ internal inline class JsonEventResult(
         message.reply(jsonObject)
     }
 }
+
+internal inline class ProtobufEventResult<T : pbandk.Message<T>>(
+    internal val message: pbandk.Message<T>
+): EventResult {
+    override fun reply(message: Message<*>) {
+        val payload = this.message.protoMarshal()
+        message.reply(Buffer.buffer(payload))
+    }
+
+}

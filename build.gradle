@@ -25,9 +25,11 @@ dependencies {
 
 //    bcrypt
     compile 'at.favre.lib:bcrypt:0.8.0'
-    
+
 //    object id parsing
     compile group: 'commons-codec', name: 'commons-codec', version: '1.12'
+
+    compile 'com.github.cretz.pbandk:pbandk-runtime-jvm:0.3.0'
 
 //    core vertx dependency
     implementation "io.vertx:vertx-core:$vertxVersion"
@@ -57,12 +59,19 @@ jacocoTestReport {
         xml.enabled true
         html.enabled false
     }
+
+    afterEvaluate {
+        classDirectories = files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: 'com/kcibald/services/user/proto/**')
+        })
+    }
 }
 
 compileKotlin {
     kotlinOptions.jvmTarget = "1.8"
     kotlinOptions.freeCompilerArgs += ["-XXLanguage:+InlineClasses"]
 }
+
 compileTestKotlin {
     kotlinOptions.jvmTarget = "1.8"
 }

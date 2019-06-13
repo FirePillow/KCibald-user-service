@@ -1,0 +1,39 @@
+syntax = "proto3";
+package com.kcibald.services.user.proto;
+
+message AuthenticationRequest {
+    string user_email = 1;
+    string plain_password = 2;
+}
+
+message AuthenticationResponse {
+
+    oneof result {
+        User success_user = 1;
+        AuthenticationErrorType common_authentication_error = 2;
+        BannedInfo banned_info = 3;
+        string system_error_message = 4;
+    }
+
+    enum AuthenticationErrorType {
+        USER_NOT_FOUND = 0;
+        INVALID_CREDENTIAL = 1;
+    }
+
+    // if banned_info is present, then user is banned
+    message BannedInfo {
+        int32 time_banned = 1;
+        // -1 if it is permeate ban
+        int32 duration = 2;
+        string message = 3;
+    }
+
+}
+
+message User {
+    string user_id = 1;
+    string user_name = 2;
+    string url_key = 3;
+    string signature = 4;
+    string avatar_key = 5;
+}

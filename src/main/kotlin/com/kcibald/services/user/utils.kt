@@ -25,6 +25,7 @@ internal fun genRandomString(length: Int): String {
 
 internal inline fun <IN> MessageConsumer<IN>.coroutineHandler(
     vertx: Vertx,
+    unexpectedFailureMessage: EventResult? = null,
     crossinline block: suspend (Message<IN>) -> EventResult
 ) {
     this.handler {
@@ -34,7 +35,11 @@ internal inline fun <IN> MessageConsumer<IN>.coroutineHandler(
                 result.reply(it)
             } catch (e: Exception) {
                 utilLogger.warn("unexpected failure at coroutineHandler, exception: $e", e)
-                it.fail(500, "unexpected")
+                if (unexpectedFailureMessage != null) {
+                    unexpectedFailureMessage.reply(it)
+                } else {
+                    it.fail(500, "unexpected")
+                }
             }
         }
     }
