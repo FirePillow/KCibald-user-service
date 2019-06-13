@@ -1,7 +1,7 @@
 package com.kcibald.services.user.proto
 
 data class AuthenticationRequest(
-    val userName: String = "",
+    val userEmail: String = "",
     val plainPassword: String = "",
     val unknownFields: Map<Int, pbandk.UnknownField> = emptyMap()
 ) : pbandk.Message<AuthenticationRequest> {
@@ -14,17 +14,14 @@ data class AuthenticationRequest(
 }
 
 data class AuthenticationResponse(
-    val error: Error? = null,
-    val user: com.kcibald.services.user.proto.UserWithRole? = null,
-    val bannedInfo: BannedInfo? = null,
+    val result: Result? = null,
     val unknownFields: Map<Int, pbandk.UnknownField> = emptyMap()
 ) : pbandk.Message<AuthenticationResponse> {
-    sealed class Error {
-        data class ErrorMessage(val errorMessage: String = "") : Error()
-    }
-
-    sealed class BannedInfo {
-        data class Message(val message: String = "") : BannedInfo()
+    sealed class Result {
+        data class SuccessUser(val successUser: com.kcibald.services.user.proto.User) : Result()
+        data class CommonAuthenticationError(val commonAuthenticationError: com.kcibald.services.user.proto.AuthenticationResponse.AuthenticationErrorType = com.kcibald.services.user.proto.AuthenticationResponse.AuthenticationErrorType.fromValue(0)) : Result()
+        data class BannedInfo(val bannedInfo: com.kcibald.services.user.proto.AuthenticationResponse.BannedInfo) : Result()
+        data class SystemErrorMessage(val systemErrorMessage: String = "") : Result()
     }
 
     override operator fun plus(other: AuthenticationResponse?) = protoMergeImpl(other)
@@ -32,6 +29,33 @@ data class AuthenticationResponse(
     override fun protoMarshal(m: pbandk.Marshaller) = protoMarshalImpl(m)
     companion object : pbandk.Message.Companion<AuthenticationResponse> {
         override fun protoUnmarshal(u: pbandk.Unmarshaller) = AuthenticationResponse.protoUnmarshalImpl(u)
+    }
+
+    data class AuthenticationErrorType(override val value: Int) : pbandk.Message.Enum {
+        companion object : pbandk.Message.Enum.Companion<AuthenticationErrorType> {
+            val USER_NOT_FOUND = AuthenticationErrorType(0)
+            val INVALID_CREDENTIAL = AuthenticationErrorType(1)
+
+            override fun fromValue(value: Int) = when (value) {
+                0 -> USER_NOT_FOUND
+                1 -> INVALID_CREDENTIAL
+                else -> AuthenticationErrorType(value)
+            }
+        }
+    }
+
+    data class BannedInfo(
+        val timeBanned: Int = 0,
+        val duration: Int = 0,
+        val message: String = "",
+        val unknownFields: Map<Int, pbandk.UnknownField> = emptyMap()
+    ) : pbandk.Message<BannedInfo> {
+        override operator fun plus(other: BannedInfo?) = protoMergeImpl(other)
+        override val protoSize by lazy { protoSizeImpl() }
+        override fun protoMarshal(m: pbandk.Marshaller) = protoMarshalImpl(m)
+        companion object : pbandk.Message.Companion<BannedInfo> {
+            override fun protoUnmarshal(u: pbandk.Unmarshaller) = BannedInfo.protoUnmarshalImpl(u)
+        }
     }
 }
 
@@ -51,96 +75,108 @@ data class User(
     }
 }
 
-data class UserWithRole(
-    val user: com.kcibald.services.user.proto.User? = null,
-    val role: com.kcibald.services.user.proto.Roles? = null,
-    val unknownFields: Map<Int, pbandk.UnknownField> = emptyMap()
-) : pbandk.Message<UserWithRole> {
-    override operator fun plus(other: UserWithRole?) = protoMergeImpl(other)
-    override val protoSize by lazy { protoSizeImpl() }
-    override fun protoMarshal(m: pbandk.Marshaller) = protoMarshalImpl(m)
-    companion object : pbandk.Message.Companion<UserWithRole> {
-        override fun protoUnmarshal(u: pbandk.Unmarshaller) = UserWithRole.protoUnmarshalImpl(u)
-    }
-}
-
-data class Roles(
-    val role: List<String> = emptyList(),
-    val unknownFields: Map<Int, pbandk.UnknownField> = emptyMap()
-) : pbandk.Message<Roles> {
-    override operator fun plus(other: Roles?) = protoMergeImpl(other)
-    override val protoSize by lazy { protoSizeImpl() }
-    override fun protoMarshal(m: pbandk.Marshaller) = protoMarshalImpl(m)
-    companion object : pbandk.Message.Companion<Roles> {
-        override fun protoUnmarshal(u: pbandk.Unmarshaller) = Roles.protoUnmarshalImpl(u)
-    }
-}
-
 private fun AuthenticationRequest.protoMergeImpl(plus: AuthenticationRequest?): AuthenticationRequest = plus?.copy(
     unknownFields = unknownFields + plus.unknownFields
 ) ?: this
 
 private fun AuthenticationRequest.protoSizeImpl(): Int {
     var protoSize = 0
-    if (userName.isNotEmpty()) protoSize += pbandk.Sizer.tagSize(1) + pbandk.Sizer.stringSize(userName)
+    if (userEmail.isNotEmpty()) protoSize += pbandk.Sizer.tagSize(1) + pbandk.Sizer.stringSize(userEmail)
     if (plainPassword.isNotEmpty()) protoSize += pbandk.Sizer.tagSize(2) + pbandk.Sizer.stringSize(plainPassword)
     protoSize += unknownFields.entries.sumBy { it.value.size() }
     return protoSize
 }
 
 private fun AuthenticationRequest.protoMarshalImpl(protoMarshal: pbandk.Marshaller) {
-    if (userName.isNotEmpty()) protoMarshal.writeTag(10).writeString(userName)
+    if (userEmail.isNotEmpty()) protoMarshal.writeTag(10).writeString(userEmail)
     if (plainPassword.isNotEmpty()) protoMarshal.writeTag(18).writeString(plainPassword)
     if (unknownFields.isNotEmpty()) protoMarshal.writeUnknownFields(unknownFields)
 }
 
 private fun AuthenticationRequest.Companion.protoUnmarshalImpl(protoUnmarshal: pbandk.Unmarshaller): AuthenticationRequest {
-    var userName = ""
+    var userEmail = ""
     var plainPassword = ""
     while (true) when (protoUnmarshal.readTag()) {
-        0 -> return AuthenticationRequest(userName, plainPassword, protoUnmarshal.unknownFields())
-        10 -> userName = protoUnmarshal.readString()
+        0 -> return AuthenticationRequest(userEmail, plainPassword, protoUnmarshal.unknownFields())
+        10 -> userEmail = protoUnmarshal.readString()
         18 -> plainPassword = protoUnmarshal.readString()
         else -> protoUnmarshal.unknownField()
     }
 }
 
 private fun AuthenticationResponse.protoMergeImpl(plus: AuthenticationResponse?): AuthenticationResponse = plus?.copy(
-    error = plus.error ?: error,
-    user = user?.plus(plus.user) ?: plus.user,
-    bannedInfo = plus.bannedInfo ?: bannedInfo,
+    result = when {
+        result is AuthenticationResponse.Result.SuccessUser && plus.result is AuthenticationResponse.Result.SuccessUser ->
+            AuthenticationResponse.Result.SuccessUser(result.successUser + plus.result.successUser)
+        result is AuthenticationResponse.Result.BannedInfo && plus.result is AuthenticationResponse.Result.BannedInfo ->
+            AuthenticationResponse.Result.BannedInfo(result.bannedInfo + plus.result.bannedInfo)
+        else ->
+            plus.result ?: result
+    },
     unknownFields = unknownFields + plus.unknownFields
 ) ?: this
 
 private fun AuthenticationResponse.protoSizeImpl(): Int {
     var protoSize = 0
-    when (error) {
-        is AuthenticationResponse.Error.ErrorMessage -> protoSize += pbandk.Sizer.tagSize(1) + pbandk.Sizer.stringSize(error.errorMessage)
-    }
-    if (user != null) protoSize += pbandk.Sizer.tagSize(2) + pbandk.Sizer.messageSize(user)
-    when (bannedInfo) {
-        is AuthenticationResponse.BannedInfo.Message -> protoSize += pbandk.Sizer.tagSize(3) + pbandk.Sizer.stringSize(bannedInfo.message)
+    when (result) {
+        is AuthenticationResponse.Result.SuccessUser -> protoSize += pbandk.Sizer.tagSize(1) + pbandk.Sizer.messageSize(result.successUser)
+        is AuthenticationResponse.Result.CommonAuthenticationError -> protoSize += pbandk.Sizer.tagSize(2) + pbandk.Sizer.enumSize(result.commonAuthenticationError)
+        is AuthenticationResponse.Result.BannedInfo -> protoSize += pbandk.Sizer.tagSize(3) + pbandk.Sizer.messageSize(result.bannedInfo)
+        is AuthenticationResponse.Result.SystemErrorMessage -> protoSize += pbandk.Sizer.tagSize(4) + pbandk.Sizer.stringSize(result.systemErrorMessage)
     }
     protoSize += unknownFields.entries.sumBy { it.value.size() }
     return protoSize
 }
 
 private fun AuthenticationResponse.protoMarshalImpl(protoMarshal: pbandk.Marshaller) {
-    if (error is AuthenticationResponse.Error.ErrorMessage) protoMarshal.writeTag(10).writeString(error.errorMessage)
-    if (user != null) protoMarshal.writeTag(18).writeMessage(user)
-    if (bannedInfo is AuthenticationResponse.BannedInfo.Message) protoMarshal.writeTag(26).writeString(bannedInfo.message)
+    if (result is AuthenticationResponse.Result.SuccessUser) protoMarshal.writeTag(10).writeMessage(result.successUser)
+    if (result is AuthenticationResponse.Result.CommonAuthenticationError) protoMarshal.writeTag(16).writeEnum(result.commonAuthenticationError)
+    if (result is AuthenticationResponse.Result.BannedInfo) protoMarshal.writeTag(26).writeMessage(result.bannedInfo)
+    if (result is AuthenticationResponse.Result.SystemErrorMessage) protoMarshal.writeTag(34).writeString(result.systemErrorMessage)
     if (unknownFields.isNotEmpty()) protoMarshal.writeUnknownFields(unknownFields)
 }
 
 private fun AuthenticationResponse.Companion.protoUnmarshalImpl(protoUnmarshal: pbandk.Unmarshaller): AuthenticationResponse {
-    var error: AuthenticationResponse.Error? = null
-    var user: com.kcibald.services.user.proto.UserWithRole? = null
-    var bannedInfo: AuthenticationResponse.BannedInfo? = null
+    var result: AuthenticationResponse.Result? = null
     while (true) when (protoUnmarshal.readTag()) {
-        0 -> return AuthenticationResponse(error, user, bannedInfo, protoUnmarshal.unknownFields())
-        10 -> error = AuthenticationResponse.Error.ErrorMessage(protoUnmarshal.readString())
-        18 -> user = protoUnmarshal.readMessage(com.kcibald.services.user.proto.UserWithRole.Companion)
-        26 -> bannedInfo = AuthenticationResponse.BannedInfo.Message(protoUnmarshal.readString())
+        0 -> return AuthenticationResponse(result, protoUnmarshal.unknownFields())
+        10 -> result = AuthenticationResponse.Result.SuccessUser(protoUnmarshal.readMessage(com.kcibald.services.user.proto.User.Companion))
+        16 -> result = AuthenticationResponse.Result.CommonAuthenticationError(protoUnmarshal.readEnum(com.kcibald.services.user.proto.AuthenticationResponse.AuthenticationErrorType.Companion))
+        26 -> result = AuthenticationResponse.Result.BannedInfo(protoUnmarshal.readMessage(com.kcibald.services.user.proto.AuthenticationResponse.BannedInfo.Companion))
+        34 -> result = AuthenticationResponse.Result.SystemErrorMessage(protoUnmarshal.readString())
+        else -> protoUnmarshal.unknownField()
+    }
+}
+
+private fun AuthenticationResponse.BannedInfo.protoMergeImpl(plus: AuthenticationResponse.BannedInfo?): AuthenticationResponse.BannedInfo = plus?.copy(
+    unknownFields = unknownFields + plus.unknownFields
+) ?: this
+
+private fun AuthenticationResponse.BannedInfo.protoSizeImpl(): Int {
+    var protoSize = 0
+    if (timeBanned != 0) protoSize += pbandk.Sizer.tagSize(1) + pbandk.Sizer.int32Size(timeBanned)
+    if (duration != 0) protoSize += pbandk.Sizer.tagSize(2) + pbandk.Sizer.int32Size(duration)
+    if (message.isNotEmpty()) protoSize += pbandk.Sizer.tagSize(3) + pbandk.Sizer.stringSize(message)
+    protoSize += unknownFields.entries.sumBy { it.value.size() }
+    return protoSize
+}
+
+private fun AuthenticationResponse.BannedInfo.protoMarshalImpl(protoMarshal: pbandk.Marshaller) {
+    if (timeBanned != 0) protoMarshal.writeTag(8).writeInt32(timeBanned)
+    if (duration != 0) protoMarshal.writeTag(16).writeInt32(duration)
+    if (message.isNotEmpty()) protoMarshal.writeTag(26).writeString(message)
+    if (unknownFields.isNotEmpty()) protoMarshal.writeUnknownFields(unknownFields)
+}
+
+private fun AuthenticationResponse.BannedInfo.Companion.protoUnmarshalImpl(protoUnmarshal: pbandk.Unmarshaller): AuthenticationResponse.BannedInfo {
+    var timeBanned = 0
+    var duration = 0
+    var message = ""
+    while (true) when (protoUnmarshal.readTag()) {
+        0 -> return AuthenticationResponse.BannedInfo(timeBanned, duration, message, protoUnmarshal.unknownFields())
+        8 -> timeBanned = protoUnmarshal.readInt32()
+        16 -> duration = protoUnmarshal.readInt32()
+        26 -> message = protoUnmarshal.readString()
         else -> protoUnmarshal.unknownField()
     }
 }
@@ -183,63 +219,6 @@ private fun User.Companion.protoUnmarshalImpl(protoUnmarshal: pbandk.Unmarshalle
         26 -> urlKey = protoUnmarshal.readString()
         34 -> signature = protoUnmarshal.readString()
         42 -> avatarKey = protoUnmarshal.readString()
-        else -> protoUnmarshal.unknownField()
-    }
-}
-
-private fun UserWithRole.protoMergeImpl(plus: UserWithRole?): UserWithRole = plus?.copy(
-    user = user?.plus(plus.user) ?: plus.user,
-    role = role?.plus(plus.role) ?: plus.role,
-    unknownFields = unknownFields + plus.unknownFields
-) ?: this
-
-private fun UserWithRole.protoSizeImpl(): Int {
-    var protoSize = 0
-    if (user != null) protoSize += pbandk.Sizer.tagSize(1) + pbandk.Sizer.messageSize(user)
-    if (role != null) protoSize += pbandk.Sizer.tagSize(2) + pbandk.Sizer.messageSize(role)
-    protoSize += unknownFields.entries.sumBy { it.value.size() }
-    return protoSize
-}
-
-private fun UserWithRole.protoMarshalImpl(protoMarshal: pbandk.Marshaller) {
-    if (user != null) protoMarshal.writeTag(10).writeMessage(user)
-    if (role != null) protoMarshal.writeTag(18).writeMessage(role)
-    if (unknownFields.isNotEmpty()) protoMarshal.writeUnknownFields(unknownFields)
-}
-
-private fun UserWithRole.Companion.protoUnmarshalImpl(protoUnmarshal: pbandk.Unmarshaller): UserWithRole {
-    var user: com.kcibald.services.user.proto.User? = null
-    var role: com.kcibald.services.user.proto.Roles? = null
-    while (true) when (protoUnmarshal.readTag()) {
-        0 -> return UserWithRole(user, role, protoUnmarshal.unknownFields())
-        10 -> user = protoUnmarshal.readMessage(com.kcibald.services.user.proto.User.Companion)
-        18 -> role = protoUnmarshal.readMessage(com.kcibald.services.user.proto.Roles.Companion)
-        else -> protoUnmarshal.unknownField()
-    }
-}
-
-private fun Roles.protoMergeImpl(plus: Roles?): Roles = plus?.copy(
-    role = role + plus.role,
-    unknownFields = unknownFields + plus.unknownFields
-) ?: this
-
-private fun Roles.protoSizeImpl(): Int {
-    var protoSize = 0
-    if (role.isNotEmpty()) protoSize += (pbandk.Sizer.tagSize(1) * role.size) + role.sumBy(pbandk.Sizer::stringSize)
-    protoSize += unknownFields.entries.sumBy { it.value.size() }
-    return protoSize
-}
-
-private fun Roles.protoMarshalImpl(protoMarshal: pbandk.Marshaller) {
-    if (role.isNotEmpty()) role.forEach { protoMarshal.writeTag(10).writeString(it) }
-    if (unknownFields.isNotEmpty()) protoMarshal.writeUnknownFields(unknownFields)
-}
-
-private fun Roles.Companion.protoUnmarshalImpl(protoUnmarshal: pbandk.Unmarshaller): Roles {
-    var role: pbandk.ListWithSize.Builder<String>? = null
-    while (true) when (protoUnmarshal.readTag()) {
-        0 -> return Roles(pbandk.ListWithSize.Builder.fixed(role), protoUnmarshal.unknownFields())
-        10 -> role = protoUnmarshal.readRepeated(role, protoUnmarshal::readString, true)
         else -> protoUnmarshal.unknownField()
     }
 }

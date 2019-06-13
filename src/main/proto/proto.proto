@@ -2,23 +2,32 @@ syntax = "proto3";
 package com.kcibald.services.user.proto;
 
 message AuthenticationRequest {
-    string user_name = 1;
+    string user_email = 1;
     string plain_password = 2;
 }
 
 message AuthenticationResponse {
-    oneof error {
-        string error_message = 1;
+
+    oneof result {
+        User success_user = 1;
+        AuthenticationErrorType common_authentication_error = 2;
+        BannedInfo banned_info = 3;
+        string system_error_message = 4;
     }
-    // if user is present, then it authentication successes
-    // user with role so that other services can cache roles
-    UserWithRole user = 2;
+
+    enum AuthenticationErrorType {
+        USER_NOT_FOUND = 0;
+        INVALID_CREDENTIAL = 1;
+    }
+
     // if banned_info is present, then user is banned
-    oneof banned_info {
+    message BannedInfo {
+        int32 time_banned = 1;
+        // -1 if it is permeate ban
+        int32 duration = 2;
         string message = 3;
     }
-    // if neither user or banned_info is present,
-    // then it is invalid credential
+
 }
 
 message User {
@@ -27,13 +36,4 @@ message User {
     string url_key = 3;
     string signature = 4;
     string avatar_key = 5;
-}
-
-message UserWithRole {
-    User user = 1;
-    Roles role = 2;
-}
-
-message Roles {
-    repeated string role = 1;
 }
