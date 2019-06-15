@@ -1,6 +1,8 @@
 {
   "mongo_config": {
-    "c": "d"
+    "db_name": "test",
+    "host": "localhost",
+    "port": 27017
   },
   "user_collection": {
     "collection_name": "collection_name",

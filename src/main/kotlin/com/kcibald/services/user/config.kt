@@ -2,6 +2,7 @@ package com.kcibald.services.user
 
 import com.kcibald.services.user.dao.emailAddressKey
 import com.kcibald.services.user.dao.emailKey
+import com.kcibald.services.user.dao.urlKeyKey
 import com.kcibald.services.user.dao.userNameKey
 import com.uchuhimo.konf.Config
 import com.uchuhimo.konf.ConfigSpec
@@ -15,11 +16,12 @@ internal object MasterConfigSpec : ConfigSpec("") {
     }
 
     internal object UserCollection : ConfigSpec("user_collection") {
-        val collection_name by optional("user-collection")
+        val collection_name by optional("users")
         val indexes by optional(
             mapOf(
                 "$emailKey.$emailAddressKey" to 1,
-                userNameKey to 1
+                userNameKey to 1,
+                urlKeyKey to 1
             )
         )
     }
