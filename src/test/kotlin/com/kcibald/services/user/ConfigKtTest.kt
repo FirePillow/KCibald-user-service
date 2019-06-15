@@ -55,8 +55,8 @@ internal class ConfigKtTest {
     @Test
     fun load_config() {
         val load = load(JsonObject())
-        assertEquals("d", load[MasterConfigSpec.mongo_config]["c"])
-        assertEquals("collection_name", load[MasterConfigSpec.UserCollection.collection_name])
+        assertEquals("test", load[MasterConfigSpec.mongo_config]["db_name"])
+        assertEquals("users_collection", load[MasterConfigSpec.UserCollection.collection_name])
         assertEquals("event_bus", load[MasterConfigSpec.AuthenticationConfig.event_bus_name])
     }
 
