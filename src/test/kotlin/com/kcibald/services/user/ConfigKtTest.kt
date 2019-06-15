@@ -13,10 +13,13 @@ internal class ConfigKtTest {
     @Language("JSON")
     val passJson = """
         {
-            "db_config": {
+            "mongo_config": {
               "a": "b"
             },
-            "user_collection_name": "collection_name",
+            "user_collection": {
+              "collection_name": "collection_name",
+              "indexes": {}
+            },
             "auth": {
               "event_bus_name": "event_bus"
             }
@@ -28,17 +31,17 @@ internal class ConfigKtTest {
 
     @Test
     fun user_collection_name() {
-        assertEquals(config[MasterConfigSpec.user_collection_name], "collection_name")
+        assertEquals(config[MasterConfigSpec.UserCollection.collection_name], "collection_name")
     }
 
     @Test
-    fun db_config() {
-        assertEquals(config[MasterConfigSpec.db_config], mapOf("a" to "b"))
+    fun mongo_config() {
+        assertEquals(config[MasterConfigSpec.mongo_config], mapOf("a" to "b"))
     }
 
     @Test
-    fun db_config_to_json() {
-        assertEquals(JsonObject(config[MasterConfigSpec.db_config]), config[MasterConfigSpec.db_config_json])
+    fun mongo_config_to_json() {
+        JsonObject(config[MasterConfigSpec.mongo_config])
     }
 
     @Test
@@ -52,8 +55,8 @@ internal class ConfigKtTest {
     @Test
     fun load_config() {
         val load = load(JsonObject())
-        assertEquals("d", load[MasterConfigSpec.db_config]["c"])
-        assertEquals("collection_name", load[MasterConfigSpec.user_collection_name])
+        assertEquals("d", load[MasterConfigSpec.mongo_config]["c"])
+        assertEquals("collection_name", load[MasterConfigSpec.UserCollection.collection_name])
         assertEquals("event_bus", load[MasterConfigSpec.AuthenticationConfig.event_bus_name])
     }
 
@@ -64,14 +67,16 @@ internal class ConfigKtTest {
             @Language("JSON")
             val configPayload = """
             {
-                "user_collection_name": "new_collection_name"
+                "user_collection": {
+                  "collection_name": "new_collection_name",
+                  "indexes": {}
+                }
             }
             """.trimIndent()
             Files.write(tempFile, configPayload.toByteArray())
             val address = tempFile.toAbsolutePath().toString()
-            println(address)
             val load = load(jsonObjectOf(custom_config_file_key to address))
-            assertEquals("new_collection_name", load[MasterConfigSpec.user_collection_name])
+            assertEquals("new_collection_name", load[MasterConfigSpec.UserCollection.collection_name])
         } finally {
             Files.delete(tempFile)
         }
@@ -80,17 +85,26 @@ internal class ConfigKtTest {
     @Test
     fun overload_JsonConfig() {
         val answer = "new_collection_name"
-        val load = load(jsonObjectOf("user_collection_name" to answer))
-        assertEquals(answer, load[MasterConfigSpec.user_collection_name])
+        val json = JsonObject("""
+            {
+                "user_collection": {
+                  "collection_name": "new_collection_name",
+                  "indexes": {}
+                }
+            }
+        """.trimIndent())
+        val load = load(json)
+        assertEquals(answer, load[MasterConfigSpec.UserCollection.collection_name])
     }
 
     @Test
     fun overload_SystemProperty() {
+        val key = "user_collection.collection_name"
         val answer = "better_collection_name"
-        val key = "user_collection_name"
         System.setProperty(key, answer)
         val load = load(jsonObjectOf())
-        assertEquals(answer, load[MasterConfigSpec.user_collection_name])
+        assertEquals(answer, load[MasterConfigSpec.UserCollection.collection_name])
+        System.clearProperty(key)
     }
 
 }

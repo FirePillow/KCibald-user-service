@@ -35,7 +35,7 @@ internal class AuthenticationInterface(sharedRuntimeData: SharedRuntimeData) : S
             val dbResult = try {
                 runtimeData.dbAccess.getUserAndPasswordWithEmail(email)
             } catch (e: Exception) {
-                logger.warn("database failure when processing authentication request for user with email: $email")
+                logger.warn("database failure when processing authentication request for user with email: $email", e)
                 return@coroutineHandler databaseErrorResponse
             }
 

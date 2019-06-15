@@ -1,19 +1,27 @@
 package com.kcibald.services.user
 
+import com.kcibald.services.user.dao.emailAddressKey
+import com.kcibald.services.user.dao.emailKey
+import com.kcibald.services.user.dao.userNameKey
 import com.uchuhimo.konf.Config
 import com.uchuhimo.konf.ConfigSpec
 import io.vertx.core.json.JsonObject
 
 internal object MasterConfigSpec : ConfigSpec("") {
-    val db_config by required<Map<String, Any>>()
-    val db_config_json by lazy {
-        JsonObject(it[db_config])
-    }
-
-    val user_collection_name by optional("user-collection")
+    val mongo_config by required<Map<String, Any>>()
 
     internal object AuthenticationConfig : ConfigSpec("auth") {
         val event_bus_name by optional("kcibald.user.authentication")
+    }
+
+    internal object UserCollection : ConfigSpec("user_collection") {
+        val collection_name by optional("user-collection")
+        val indexes by optional(
+            mapOf(
+                "$emailKey.$emailAddressKey" to 1,
+                userNameKey to 1
+            )
+        )
     }
 }
 

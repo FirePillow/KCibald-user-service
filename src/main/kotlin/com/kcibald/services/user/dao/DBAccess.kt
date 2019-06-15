@@ -2,29 +2,34 @@ package com.kcibald.services.user.dao
 
 import com.kcibald.services.user.MasterConfigSpec
 import com.kcibald.services.user.UserServiceVerticle
+import com.kcibald.utils.i
 import com.kcibald.utils.immutable
+import com.kcibald.utils.w
 import com.uchuhimo.konf.Config
 import io.vertx.core.json.JsonObject
 import io.vertx.core.logging.LoggerFactory
 import io.vertx.ext.mongo.MongoClient
 import io.vertx.kotlin.core.json.json
+import io.vertx.kotlin.core.json.jsonArrayOf
+import io.vertx.kotlin.core.json.jsonObjectOf
 import io.vertx.kotlin.core.json.obj
 import io.vertx.kotlin.ext.mongo.createCollectionAwait
 import io.vertx.kotlin.ext.mongo.findOneAwait
 import io.vertx.kotlin.ext.mongo.getCollectionsAwait
+import io.vertx.kotlin.ext.mongo.insertAwait
 import java.util.*
 
-internal class DBAccess(verticle: UserServiceVerticle, config: Config) {
+internal class DBAccess(verticle: UserServiceVerticle, private val config: Config) {
 
     private val dbClient =
         MongoClient.createShared(
             verticle.vertx,
-            config[MasterConfigSpec.db_config_json]
+            JsonObject(config[MasterConfigSpec.mongo_config])
         )
 
     private val logger = LoggerFactory.getLogger(DBAccess::class.java)
 
-    private val userCollectionName = config[MasterConfigSpec.user_collection_name]
+    private val userCollectionName = config[MasterConfigSpec.UserCollection.collection_name]
 
     private val userFieldProjection = json {
         obj(

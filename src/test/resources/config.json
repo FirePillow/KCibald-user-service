@@ -1,8 +1,11 @@
 {
-  "db_config": {
+  "mongo_config": {
     "c": "d"
   },
-  "user_collection_name": "collection_name",
+  "user_collection": {
+    "collection_name": "collection_name",
+    "indexes": {}
+  },
   "auth": {
     "event_bus_name": "event_bus"
   }
