@@ -30,6 +30,37 @@ message AuthenticationResponse {
 
 }
 
+message DescribeUserRequest {
+
+    oneof by {
+        string url_Key = 1;
+        string ID = 2;
+        string user_name = 3;
+    }
+
+}
+
+message DescribeUserResponse {
+    oneof result {
+        SuccessSingleUserResult single_user_result = 1;
+        SuccessMultiUserResult multi_user_result = 2;
+        Empty user_not_found = 3;
+        string system_error_message = 4;
+    }
+
+    message SuccessSingleUserResult {
+        User result = 1;
+    }
+
+    message SuccessMultiUserResult {
+        repeated User result = 1;
+    }
+
+}
+
+message Empty {
+}
+
 message User {
     string user_id = 1;
     string user_name = 2;

@@ -1,3 +1,5 @@
+@file:Suppress("RemoveRedundantQualifierName", "ClassName")
+
 package com.kcibald.services.user.proto
 
 data class AuthenticationRequest(
@@ -56,6 +58,78 @@ data class AuthenticationResponse(
         companion object : pbandk.Message.Companion<BannedInfo> {
             override fun protoUnmarshal(u: pbandk.Unmarshaller) = BannedInfo.protoUnmarshalImpl(u)
         }
+    }
+}
+
+data class DescribeUserRequest(
+    val by: By? = null,
+    val unknownFields: Map<Int, pbandk.UnknownField> = emptyMap()
+) : pbandk.Message<DescribeUserRequest> {
+    sealed class By {
+        data class UrlKey(val urlKey: String = "") : By()
+        data class ID(val iD: String = "") : By()
+        data class UserName(val userName: String = "") : By()
+    }
+
+    override operator fun plus(other: DescribeUserRequest?) = protoMergeImpl(other)
+    override val protoSize by lazy { protoSizeImpl() }
+    override fun protoMarshal(m: pbandk.Marshaller) = protoMarshalImpl(m)
+    companion object : pbandk.Message.Companion<DescribeUserRequest> {
+        override fun protoUnmarshal(u: pbandk.Unmarshaller) = DescribeUserRequest.protoUnmarshalImpl(u)
+    }
+}
+
+data class DescribeUserResponse(
+    val result: Result_? = null,
+    val unknownFields: Map<Int, pbandk.UnknownField> = emptyMap()
+) : pbandk.Message<DescribeUserResponse> {
+    sealed class Result_ {
+        data class SingleUserResult(val singleUserResult: com.kcibald.services.user.proto.DescribeUserResponse.SuccessSingleUserResult) : Result_()
+        data class MultiUserResult(val multiUserResult: com.kcibald.services.user.proto.DescribeUserResponse.SuccessMultiUserResult) : Result_()
+        data class UserNotFound(val userNotFound: com.kcibald.services.user.proto.Empty) : Result_()
+        data class SystemErrorMessage(val systemErrorMessage: String = "") : Result_()
+    }
+
+    override operator fun plus(other: DescribeUserResponse?) = protoMergeImpl(other)
+    override val protoSize by lazy { protoSizeImpl() }
+    override fun protoMarshal(m: pbandk.Marshaller) = protoMarshalImpl(m)
+    companion object : pbandk.Message.Companion<DescribeUserResponse> {
+        override fun protoUnmarshal(u: pbandk.Unmarshaller) = DescribeUserResponse.protoUnmarshalImpl(u)
+    }
+
+    data class SuccessSingleUserResult(
+        val result: com.kcibald.services.user.proto.User? = null,
+        val unknownFields: Map<Int, pbandk.UnknownField> = emptyMap()
+    ) : pbandk.Message<SuccessSingleUserResult> {
+        override operator fun plus(other: SuccessSingleUserResult?) = protoMergeImpl(other)
+        override val protoSize by lazy { protoSizeImpl() }
+        override fun protoMarshal(m: pbandk.Marshaller) = protoMarshalImpl(m)
+        companion object : pbandk.Message.Companion<SuccessSingleUserResult> {
+            override fun protoUnmarshal(u: pbandk.Unmarshaller) = SuccessSingleUserResult.protoUnmarshalImpl(u)
+        }
+    }
+
+    data class SuccessMultiUserResult(
+        val result: List<com.kcibald.services.user.proto.User> = emptyList(),
+        val unknownFields: Map<Int, pbandk.UnknownField> = emptyMap()
+    ) : pbandk.Message<SuccessMultiUserResult> {
+        override operator fun plus(other: SuccessMultiUserResult?) = protoMergeImpl(other)
+        override val protoSize by lazy { protoSizeImpl() }
+        override fun protoMarshal(m: pbandk.Marshaller) = protoMarshalImpl(m)
+        companion object : pbandk.Message.Companion<SuccessMultiUserResult> {
+            override fun protoUnmarshal(u: pbandk.Unmarshaller) = SuccessMultiUserResult.protoUnmarshalImpl(u)
+        }
+    }
+}
+
+data class Empty(
+    val unknownFields: Map<Int, pbandk.UnknownField> = emptyMap()
+) : pbandk.Message<Empty> {
+    override operator fun plus(other: Empty?) = protoMergeImpl(other)
+    override val protoSize by lazy { protoSizeImpl() }
+    override fun protoMarshal(m: pbandk.Marshaller) = protoMarshalImpl(m)
+    companion object : pbandk.Message.Companion<Empty> {
+        override fun protoUnmarshal(u: pbandk.Unmarshaller) = Empty.protoUnmarshalImpl(u)
     }
 }
 
@@ -177,6 +251,159 @@ private fun AuthenticationResponse.BannedInfo.Companion.protoUnmarshalImpl(proto
         8 -> timeBanned = protoUnmarshal.readInt32()
         16 -> duration = protoUnmarshal.readInt32()
         26 -> message = protoUnmarshal.readString()
+        else -> protoUnmarshal.unknownField()
+    }
+}
+
+private fun DescribeUserRequest.protoMergeImpl(plus: DescribeUserRequest?): DescribeUserRequest = plus?.copy(
+    by = plus.by ?: by,
+    unknownFields = unknownFields + plus.unknownFields
+) ?: this
+
+private fun DescribeUserRequest.protoSizeImpl(): Int {
+    var protoSize = 0
+    when (by) {
+        is DescribeUserRequest.By.UrlKey -> protoSize += pbandk.Sizer.tagSize(1) + pbandk.Sizer.stringSize(by.urlKey)
+        is DescribeUserRequest.By.ID -> protoSize += pbandk.Sizer.tagSize(2) + pbandk.Sizer.stringSize(by.iD)
+        is DescribeUserRequest.By.UserName -> protoSize += pbandk.Sizer.tagSize(3) + pbandk.Sizer.stringSize(by.userName)
+    }
+    protoSize += unknownFields.entries.sumBy { it.value.size() }
+    return protoSize
+}
+
+private fun DescribeUserRequest.protoMarshalImpl(protoMarshal: pbandk.Marshaller) {
+    if (by is DescribeUserRequest.By.UrlKey) protoMarshal.writeTag(10).writeString(by.urlKey)
+    if (by is DescribeUserRequest.By.ID) protoMarshal.writeTag(18).writeString(by.iD)
+    if (by is DescribeUserRequest.By.UserName) protoMarshal.writeTag(26).writeString(by.userName)
+    if (unknownFields.isNotEmpty()) protoMarshal.writeUnknownFields(unknownFields)
+}
+
+private fun DescribeUserRequest.Companion.protoUnmarshalImpl(protoUnmarshal: pbandk.Unmarshaller): DescribeUserRequest {
+    var by: DescribeUserRequest.By? = null
+    while (true) when (protoUnmarshal.readTag()) {
+        0 -> return DescribeUserRequest(by, protoUnmarshal.unknownFields())
+        10 -> by = DescribeUserRequest.By.UrlKey(protoUnmarshal.readString())
+        18 -> by = DescribeUserRequest.By.ID(protoUnmarshal.readString())
+        26 -> by = DescribeUserRequest.By.UserName(protoUnmarshal.readString())
+        else -> protoUnmarshal.unknownField()
+    }
+}
+
+private fun DescribeUserResponse.protoMergeImpl(plus: DescribeUserResponse?): DescribeUserResponse = plus?.copy(
+    result = when {
+        result is DescribeUserResponse.Result_.SingleUserResult && plus.result is DescribeUserResponse.Result_.SingleUserResult ->
+            DescribeUserResponse.Result_.SingleUserResult(result.singleUserResult + plus.result.singleUserResult)
+        result is DescribeUserResponse.Result_.MultiUserResult && plus.result is DescribeUserResponse.Result_.MultiUserResult ->
+            DescribeUserResponse.Result_.MultiUserResult(result.multiUserResult + plus.result.multiUserResult)
+        result is DescribeUserResponse.Result_.UserNotFound && plus.result is DescribeUserResponse.Result_.UserNotFound ->
+            DescribeUserResponse.Result_.UserNotFound(result.userNotFound + plus.result.userNotFound)
+        else ->
+            plus.result ?: result
+    },
+    unknownFields = unknownFields + plus.unknownFields
+) ?: this
+
+private fun DescribeUserResponse.protoSizeImpl(): Int {
+    var protoSize = 0
+    when (result) {
+        is DescribeUserResponse.Result_.SingleUserResult -> protoSize += pbandk.Sizer.tagSize(1) + pbandk.Sizer.messageSize(result.singleUserResult)
+        is DescribeUserResponse.Result_.MultiUserResult -> protoSize += pbandk.Sizer.tagSize(2) + pbandk.Sizer.messageSize(result.multiUserResult)
+        is DescribeUserResponse.Result_.UserNotFound -> protoSize += pbandk.Sizer.tagSize(3) + pbandk.Sizer.messageSize(result.userNotFound)
+        is DescribeUserResponse.Result_.SystemErrorMessage -> protoSize += pbandk.Sizer.tagSize(4) + pbandk.Sizer.stringSize(result.systemErrorMessage)
+    }
+    protoSize += unknownFields.entries.sumBy { it.value.size() }
+    return protoSize
+}
+
+private fun DescribeUserResponse.protoMarshalImpl(protoMarshal: pbandk.Marshaller) {
+    if (result is DescribeUserResponse.Result_.SingleUserResult) protoMarshal.writeTag(10).writeMessage(result.singleUserResult)
+    if (result is DescribeUserResponse.Result_.MultiUserResult) protoMarshal.writeTag(18).writeMessage(result.multiUserResult)
+    if (result is DescribeUserResponse.Result_.UserNotFound) protoMarshal.writeTag(26).writeMessage(result.userNotFound)
+    if (result is DescribeUserResponse.Result_.SystemErrorMessage) protoMarshal.writeTag(34).writeString(result.systemErrorMessage)
+    if (unknownFields.isNotEmpty()) protoMarshal.writeUnknownFields(unknownFields)
+}
+
+private fun DescribeUserResponse.Companion.protoUnmarshalImpl(protoUnmarshal: pbandk.Unmarshaller): DescribeUserResponse {
+    var result: DescribeUserResponse.Result_? = null
+    while (true) when (protoUnmarshal.readTag()) {
+        0 -> return DescribeUserResponse(result, protoUnmarshal.unknownFields())
+        10 -> result = DescribeUserResponse.Result_.SingleUserResult(protoUnmarshal.readMessage(com.kcibald.services.user.proto.DescribeUserResponse.SuccessSingleUserResult.Companion))
+        18 -> result = DescribeUserResponse.Result_.MultiUserResult(protoUnmarshal.readMessage(com.kcibald.services.user.proto.DescribeUserResponse.SuccessMultiUserResult.Companion))
+        26 -> result = DescribeUserResponse.Result_.UserNotFound(protoUnmarshal.readMessage(com.kcibald.services.user.proto.Empty.Companion))
+        34 -> result = DescribeUserResponse.Result_.SystemErrorMessage(protoUnmarshal.readString())
+        else -> protoUnmarshal.unknownField()
+    }
+}
+
+private fun DescribeUserResponse.SuccessSingleUserResult.protoMergeImpl(plus: DescribeUserResponse.SuccessSingleUserResult?): DescribeUserResponse.SuccessSingleUserResult = plus?.copy(
+    result = result?.plus(plus.result) ?: plus.result,
+    unknownFields = unknownFields + plus.unknownFields
+) ?: this
+
+private fun DescribeUserResponse.SuccessSingleUserResult.protoSizeImpl(): Int {
+    var protoSize = 0
+    if (result != null) protoSize += pbandk.Sizer.tagSize(1) + pbandk.Sizer.messageSize(result)
+    protoSize += unknownFields.entries.sumBy { it.value.size() }
+    return protoSize
+}
+
+private fun DescribeUserResponse.SuccessSingleUserResult.protoMarshalImpl(protoMarshal: pbandk.Marshaller) {
+    if (result != null) protoMarshal.writeTag(10).writeMessage(result)
+    if (unknownFields.isNotEmpty()) protoMarshal.writeUnknownFields(unknownFields)
+}
+
+private fun DescribeUserResponse.SuccessSingleUserResult.Companion.protoUnmarshalImpl(protoUnmarshal: pbandk.Unmarshaller): DescribeUserResponse.SuccessSingleUserResult {
+    var result: com.kcibald.services.user.proto.User? = null
+    while (true) when (protoUnmarshal.readTag()) {
+        0 -> return DescribeUserResponse.SuccessSingleUserResult(result, protoUnmarshal.unknownFields())
+        10 -> result = protoUnmarshal.readMessage(com.kcibald.services.user.proto.User.Companion)
+        else -> protoUnmarshal.unknownField()
+    }
+}
+
+private fun DescribeUserResponse.SuccessMultiUserResult.protoMergeImpl(plus: DescribeUserResponse.SuccessMultiUserResult?): DescribeUserResponse.SuccessMultiUserResult = plus?.copy(
+    result = result + plus.result,
+    unknownFields = unknownFields + plus.unknownFields
+) ?: this
+
+private fun DescribeUserResponse.SuccessMultiUserResult.protoSizeImpl(): Int {
+    var protoSize = 0
+    if (result.isNotEmpty()) protoSize += (pbandk.Sizer.tagSize(1) * result.size) + result.sumBy(pbandk.Sizer::messageSize)
+    protoSize += unknownFields.entries.sumBy { it.value.size() }
+    return protoSize
+}
+
+private fun DescribeUserResponse.SuccessMultiUserResult.protoMarshalImpl(protoMarshal: pbandk.Marshaller) {
+    if (result.isNotEmpty()) result.forEach { protoMarshal.writeTag(10).writeMessage(it) }
+    if (unknownFields.isNotEmpty()) protoMarshal.writeUnknownFields(unknownFields)
+}
+
+private fun DescribeUserResponse.SuccessMultiUserResult.Companion.protoUnmarshalImpl(protoUnmarshal: pbandk.Unmarshaller): DescribeUserResponse.SuccessMultiUserResult {
+    var result: pbandk.ListWithSize.Builder<com.kcibald.services.user.proto.User>? = null
+    while (true) when (protoUnmarshal.readTag()) {
+        0 -> return DescribeUserResponse.SuccessMultiUserResult(pbandk.ListWithSize.Builder.fixed(result), protoUnmarshal.unknownFields())
+        10 -> result = protoUnmarshal.readRepeatedMessage(result, com.kcibald.services.user.proto.User.Companion, true)
+        else -> protoUnmarshal.unknownField()
+    }
+}
+
+private fun Empty.protoMergeImpl(plus: Empty?): Empty = plus?.copy(
+    unknownFields = unknownFields + plus.unknownFields
+) ?: this
+
+private fun Empty.protoSizeImpl(): Int {
+    var protoSize = 0
+    protoSize += unknownFields.entries.sumBy { it.value.size() }
+    return protoSize
+}
+
+private fun Empty.protoMarshalImpl(protoMarshal: pbandk.Marshaller) {
+    if (unknownFields.isNotEmpty()) protoMarshal.writeUnknownFields(unknownFields)
+}
+
+private fun Empty.Companion.protoUnmarshalImpl(protoUnmarshal: pbandk.Unmarshaller): Empty {
+    while (true) when (protoUnmarshal.readTag()) {
+        0 -> return Empty(protoUnmarshal.unknownFields())
         else -> protoUnmarshal.unknownField()
     }
 }

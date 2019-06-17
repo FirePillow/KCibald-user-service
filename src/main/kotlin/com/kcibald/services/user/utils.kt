@@ -1,5 +1,6 @@
 package com.kcibald.services.user
 
+import com.kcibald.services.user.dao.SafeUserInternal
 import com.kcibald.services.user.handlers.EventResult
 import io.vertx.core.Vertx
 import io.vertx.core.eventbus.Message
@@ -11,6 +12,7 @@ import kotlinx.coroutines.launch
 import java.util.*
 
 private object Utils
+
 private val utilLogger = LoggerFactory.getLogger(Utils::class.java)!!
 
 private val chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".toCharArray()
@@ -44,3 +46,13 @@ internal inline fun <IN> MessageConsumer<IN>.coroutineHandler(
         }
     }
 }
+
+@Suppress("NOTHING_TO_INLINE")
+internal inline fun SafeUserInternal.transform(): com.kcibald.services.user.proto.User =
+    com.kcibald.services.user.proto.User(
+        userId = this.user_id,
+        userName = this.user_name,
+        urlKey = this.url_key,
+        signature = this.signature,
+        avatarKey = this.avatar_key
+    )
