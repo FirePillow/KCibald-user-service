@@ -1,11 +1,11 @@
 package com.kcibald.services.user.dao
 
 import com.kcibald.services.user.MasterConfigSpec
-import com.kcibald.services.user.UserServiceVerticle
 import com.kcibald.utils.i
 import com.kcibald.utils.immutable
 import com.kcibald.utils.w
 import com.uchuhimo.konf.Config
+import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.core.logging.LoggerFactory
 import io.vertx.ext.mongo.MongoClient
@@ -13,23 +13,21 @@ import io.vertx.kotlin.core.json.json
 import io.vertx.kotlin.core.json.jsonArrayOf
 import io.vertx.kotlin.core.json.jsonObjectOf
 import io.vertx.kotlin.core.json.obj
-import io.vertx.kotlin.ext.mongo.createCollectionAwait
-import io.vertx.kotlin.ext.mongo.findOneAwait
-import io.vertx.kotlin.ext.mongo.getCollectionsAwait
-import io.vertx.kotlin.ext.mongo.insertAwait
+import io.vertx.kotlin.ext.mongo.*
+import org.apache.commons.codec.binary.Hex
 import java.util.*
 
-internal class DBAccess(verticle: UserServiceVerticle, private val config: Config) {
+internal class DBAccess(vertx: Vertx, private val config: Config) {
 
-    private val dbClient =
+    internal val dbClient =
         MongoClient.createShared(
-            verticle.vertx,
+            vertx,
             JsonObject(config[MasterConfigSpec.mongo_config])
         )
 
     private val logger = LoggerFactory.getLogger(DBAccess::class.java)
 
-    private val userCollectionName = config[MasterConfigSpec.UserCollection.collection_name]
+    internal val userCollectionName = config[MasterConfigSpec.UserCollection.collection_name]
 
     private val userFieldProjection = json {
         obj(
@@ -43,22 +41,46 @@ internal class DBAccess(verticle: UserServiceVerticle, private val config: Confi
 
     suspend fun initialize() {
         logger.info("DBAccess initializing, verifying database integrity")
-        checkCollectionExists(setOf(userCollectionName))
-        logger.info("DBAccess initialization complete")
+        val existsNames = dbClient.getCollectionsAwait()
+        if (existsNames.contains(userCollectionName)) {
+            logger.i { "user collection (name: $userCollectionName) exists, continue" }
+        } else {
+            logger.w { "user collection (name: $userCollectionName) do not exist, creating collection" }
+            dbClient.createCollectionAwait(userCollectionName)
+            logger.i { "user collection (name: $userCollectionName) created" }
+        }
+        logger.i { "creating index on user collection (name: $userCollectionName)" }
+        val indexes = config[MasterConfigSpec.UserCollection.indexes]
+        if (indexes.isNotEmpty()) {
+            val indexQuery = JsonObject(indexes)
+            dbClient.createIndexAwait(userCollectionName, indexQuery)
+            logger.i { "index creation success for user collection (name: $userCollectionName), fields ${indexes.keys}" }
+        } else {
+            logger.i { "indexes empty, not creating indexes" }
+        }
+        logger.i { "DBAccess initialization complete" }
     }
+
+    private val base64Encoder = Base64.getUrlEncoder()!!
+    private val base64Decoder = Base64.getUrlDecoder()!!
 
     suspend fun getUserWithId(id: String): SafeUserInternal? {
-        assert(id.length == 5)
-        val query = JsonObject(Collections.singletonMap(userIdKey, id) as Map<String, Any>)
-        val jsonObject = dbClient.findOneAwait(userCollectionName, query, JsonObject())
+        val decodedId = Hex.encodeHexString(base64Decoder.decode(id))
+        val query = JsonObject(Collections.singletonMap("_id", decodedId) as Map<String, Any>)
+        val jsonObject = dbClient.findOneAwait(userCollectionName, query, userFieldProjection)
         return jsonObject?.let(::SafeUserInternal)
     }
 
-    suspend fun getUserWithName(id: String): SafeUserInternal? {
-        assert(id.length == 5)
-        val query = JsonObject(Collections.singletonMap(userIdKey, id) as Map<String, Any>)
-        val jsonObject = dbClient.findOneAwait(userCollectionName, query, JsonObject())
-        return jsonObject?.let(::SafeUserInternal)
+    suspend fun getUserWithName(name: String): List<SafeUserInternal> {
+        val query = JsonObject(Collections.singletonMap(userNameKey, name) as Map<String, Any>)
+        val jsonObject = dbClient.findAwait(userCollectionName, query)
+        return jsonObject.map(::SafeUserInternal)
+    }
+
+    suspend fun getUserWithUrlKey(urlKey: String): SafeUserInternal? {
+        val query = JsonObject(Collections.singletonMap(urlKeyKey, urlKey) as Map<String, Any>)
+        val dbResult = dbClient.findOneAwait(userCollectionName, query, userFieldProjection)
+        return dbResult?.let(::SafeUserInternal)
     }
 
     suspend fun getUserAndPasswordWithEmail(email: String): Pair<SafeUserInternal, ByteArray>? {
@@ -79,17 +101,55 @@ internal class DBAccess(verticle: UserServiceVerticle, private val config: Confi
             }
     }
 
-    private suspend fun checkCollectionExists(collectionNames: Set<String>) {
-        val existsNames = dbClient.getCollectionsAwait()
-        for (collectionName in collectionNames) {
-            if (existsNames.contains(collectionName)) {
-                logger.info("collection with name $collectionName exists, continue")
-            } else {
-                logger.warn("collection with name $collectionName do not exist, creating collection")
-                dbClient.createCollectionAwait(collectionName)
-                logger.info("collection $collectionName created")
-            }
+    suspend fun insertNewUser(
+        userName: String,
+        urlKey: String,
+        signature: String = "",
+        avatarKey: String,
+        schoolEmail: String,
+        rawPassword: String,
+        schoolEmailVerified: Boolean = false,
+        personalEmail: String? = null,
+        personalEmailVerified: Boolean = false
+    ): String {
+
+        val emailJson = jsonArrayOf(
+            jsonObjectOf(
+                typeKey to schoolEmailKey,
+                emailAddressKey to schoolEmail,
+                emailVerifiedKey to schoolEmailVerified
+            )
+        )
+
+        if (personalEmail != null) {
+            emailJson.add(
+                jsonObjectOf(
+                    typeKey to personalEmailKey,
+                    emailAddressKey to personalEmail,
+                    emailVerifiedKey to personalEmailVerified
+                )
+            )
         }
+
+//        as the document do not have an _id field, this method WILL NOT return null
+
+        val documentId = dbClient.insertAwait(
+            userCollectionName,
+            jsonObjectOf(
+                userNameKey to userName,
+                urlKeyKey to urlKey,
+                signatureKey to signature,
+                avatarFileKey to avatarKey,
+                emailKey to emailJson,
+                passwordHashKey to rawPassword
+            )
+        )!!
+        return base64Encoder.encodeToString(Hex.decodeHex(documentId))
+    }
+
+    @Suppress("RedundantSuspendModifier")
+    suspend fun close() {
+        dbClient.close()
     }
 
 }

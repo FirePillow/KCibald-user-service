@@ -24,7 +24,7 @@ class UserServiceVerticle : CoroutineVerticle() {
         logger.i { "config loaded, ${config.toMap()}" }
 
         logger.i { "initializing database" }
-        dbaccess = DBAccess(this, config)
+        dbaccess = DBAccess(this.vertx, config)
         dbaccess.initialize()
         logger.i { "database initialization complete" }
 
