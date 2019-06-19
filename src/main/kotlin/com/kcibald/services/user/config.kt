@@ -43,8 +43,14 @@ internal fun load(additional: JsonObject): Config {
         config = config.from.json.file(additional.getString(custom_config_file_key))
     }
 
+    val flattenedMap = additional.flattenedMap
+
+//    just let the null exception throw
+    @Suppress("UNCHECKED_CAST")
+    flattenedMap as Map<String, Any>
+
     config = config
-        .from.map.hierarchical(additional.map)
+        .from.map.hierarchical(flattenedMap)
         .from.env()
         .from.systemProperties()
 
