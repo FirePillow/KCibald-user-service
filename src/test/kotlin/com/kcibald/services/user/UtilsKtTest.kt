@@ -1,5 +1,6 @@
 package com.kcibald.services.user
 
+import com.kcibald.services.user.dao.SafeUser
 import com.kcibald.services.user.handlers.EmptyEventResult
 import com.kcibald.services.user.handlers.EventResult
 import io.vertx.core.*
@@ -39,7 +40,7 @@ internal class UtilsKtTest {
     }
 
     @Test
-    fun coroutineHandlerUnexpectErrorOverride(vertx: Vertx, context: VertxTestContext)  {
+    fun coroutineHandlerUnexpectErrorOverride(vertx: Vertx, context: VertxTestContext) {
         val answer = "oh yeah"
         val target = MockMessageConsumer()
 
@@ -52,7 +53,7 @@ internal class UtilsKtTest {
         }
 
         target.completionHandler {
-            context.verify{
+            context.verify {
                 assertEquals(answer, target.handlerResult.get())
                 context.completeNow()
             }
@@ -132,6 +133,40 @@ internal class UtilsKtTest {
 
         override fun setMaxBufferedMessages(maxBufferedMessages: Int) = throw IllegalAccessError()
 
+    }
+
+    @Test
+    fun protoUserTransform() {
+        val userName = "user_name"
+        val avatarKey = "avatar"
+        val userId = "XQnlUfIU1EA3-50f"
+        val signature = "signature"
+        val urlKey = "user_name"
+
+        val userInternal = SafeUser(userId, userName, signature, avatarKey)
+
+        val transformed = userInternal.transform()
+        assertEquals(userName, transformed.userName)
+        assertEquals(userId, transformed.userId)
+        assertEquals(avatarKey, transformed.avatarKey)
+        assertEquals(signature, transformed.signature)
+        assertEquals(urlKey, transformed.urlKey)
+    }
+
+    @Test
+    fun encodeUserIdFromDBID() {
+        assertEquals("XQnlUfIU1EA3-50e", encodeUserIdFromDBID("5d09e551f214d44037fb9d1e"))
+        assertEquals("XQnlUfIU1EA3-50f", encodeUserIdFromDBID("5d09e551f214d44037fb9d1f"))
+        assertEquals("XQnlUfIU1EA3-50g", encodeUserIdFromDBID("5d09e551f214d44037fb9d20"))
+        assertEquals("XQnlUfIU1EA3-50k", encodeUserIdFromDBID("5d09e551f214d44037fb9d24"))
+    }
+
+    @Test
+    fun encodeDBIDFromUserId() {
+        assertEquals("5d09e551f214d44037fb9d1e", encodeDBIDFromUserId("XQnlUfIU1EA3-50e"))
+        assertEquals("5d09e551f214d44037fb9d1f", encodeDBIDFromUserId("XQnlUfIU1EA3-50f"))
+        assertEquals("5d09e551f214d44037fb9d20", encodeDBIDFromUserId("XQnlUfIU1EA3-50g"))
+        assertEquals("5d09e551f214d44037fb9d24", encodeDBIDFromUserId("XQnlUfIU1EA3-50k"))
     }
 
 

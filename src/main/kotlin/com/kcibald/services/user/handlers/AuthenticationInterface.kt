@@ -4,13 +4,13 @@ import at.favre.lib.crypto.bcrypt.BCrypt
 import com.kcibald.services.user.MasterConfigSpec
 import com.kcibald.services.user.SharedRuntimeData
 import com.kcibald.services.user.coroutineHandler
-import com.kcibald.services.user.dao.SafeUserInternal
-import com.kcibald.services.user.dao.urlKeyKey
+import com.kcibald.services.user.dao.SafeUser
 import com.kcibald.services.user.proto.AuthenticationRequest
 import com.kcibald.services.user.proto.AuthenticationResponse
 import com.kcibald.services.user.proto.AuthenticationResponse.AuthenticationErrorType.Companion.INVALID_CREDENTIAL
 import com.kcibald.services.user.proto.AuthenticationResponse.AuthenticationErrorType.Companion.USER_NOT_FOUND
 import com.kcibald.services.user.proto.AuthenticationResponse.Result.*
+import com.kcibald.services.user.transform
 import com.kcibald.utils.d
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.eventbus.EventBus
@@ -62,17 +62,8 @@ internal class AuthenticationInterface(sharedRuntimeData: SharedRuntimeData) : S
 
 }
 
-internal fun createSuccessAuthenticationResponse(user: SafeUserInternal)
-        : ProtobufEventResult<AuthenticationResponse> {
-    val payloadUser = com.kcibald.services.user.proto.User(
-        userId = user.user_id,
-        userName = user.user_name,
-        urlKey = urlKeyKey,
-        signature = user.signature,
-        avatarKey = user.avatar_key
-    )
-    return ProtobufEventResult(AuthenticationResponse(SuccessUser(payloadUser)))
-}
+internal fun createSuccessAuthenticationResponse(user: SafeUser) =
+    ProtobufEventResult(AuthenticationResponse(SuccessUser(user.transform())))
 
 internal val invalidCredentialFailureAuthenticationResponse = ProtobufEventResult(
     AuthenticationResponse(

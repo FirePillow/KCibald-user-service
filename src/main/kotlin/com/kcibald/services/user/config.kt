@@ -15,6 +15,10 @@ internal object MasterConfigSpec : ConfigSpec("") {
         val event_bus_name by optional("kcibald.user.authentication")
     }
 
+    internal object DescribeUserConfig : ConfigSpec("describe_user") {
+        val event_bus_name by optional("kcibald.user.describe")
+    }
+
     internal object UserCollection : ConfigSpec("user_collection") {
         val collection_name by optional("users")
         val indexes by optional(
