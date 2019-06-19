@@ -1,5 +1,6 @@
 package com.kcibald.services.user
 
+import com.kcibald.services.user.dao.*
 import com.kcibald.services.user.handlers.EmptyEventResult
 import com.kcibald.services.user.handlers.EventResult
 import io.vertx.core.*
@@ -8,6 +9,7 @@ import io.vertx.core.eventbus.Message
 import io.vertx.core.eventbus.MessageConsumer
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
+import io.vertx.kotlin.core.json.jsonObjectOf
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -132,6 +134,32 @@ internal class UtilsKtTest {
 
         override fun setMaxBufferedMessages(maxBufferedMessages: Int) = throw IllegalAccessError()
 
+    }
+
+    @Test
+    fun protoUserTransform() {
+        val userName = "user_name"
+        val avatarKey = "avatar"
+        val userId = "XQnlUfIU1EA3-50f"
+        val signature = "signature"
+        val urlKey = "url"
+
+        val userInternal = SafeUserInternal(
+            jsonObjectOf(
+                "_id" to "5d09e551f214d44037fb9d1f",
+                userNameKey to userName,
+                avatarFileKey to avatarKey,
+                signatureKey to signature,
+                urlKeyKey to urlKey
+            )
+        )
+
+        val transformed = userInternal.transform()
+        assertEquals(userName, transformed.userName)
+        assertEquals(userId, transformed.userId)
+        assertEquals(avatarKey, transformed.avatarKey)
+        assertEquals(signature, transformed.signature)
+        assertEquals(urlKey, transformed.urlKey)
     }
 
 

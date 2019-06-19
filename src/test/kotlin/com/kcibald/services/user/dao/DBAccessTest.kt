@@ -33,6 +33,7 @@ internal class DBAccessTest {
 
     @AfterEach
     fun tearDown() = runBlocking {
+        dbClient.dropCollectionAwait(dbAccess.userCollectionName)
         dbAccess.close()
     }
 
