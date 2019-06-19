@@ -583,4 +583,69 @@ internal class UtilsKtTest {
         assertEquals(mapOf("kk" to listOf("jj")), result)
     }
 
+    @Test
+    fun flattenMap_non_nested_unknown() {
+        val original = mapOf<String, Any?>(
+            "kk" to TestObj
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(mapOf("kk" to TestObj.answerString), result)
+    }
+
+    @Test
+    fun flattenMap_nested_map_unknown() {
+        val original = mapOf<String, Any?>(
+            "kk" to mapOf("jj" to TestObj)
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(mapOf("kk" to mapOf("jj" to TestObj.answerString)), result)
+    }
+
+    @Test
+    fun flattenMap_nested_array_unknown() {
+        val original = mapOf<String, Any?>(
+            "kk" to arrayOf(TestObj)
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(mapOf("kk" to listOf(TestObj.answerString)), result)
+    }
+
+    @Test
+    fun flattenMap_nested_collection_unknown() {
+        val original = mapOf<String, Any?>(
+            "kk" to listOf(TestObj)
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(mapOf("kk" to listOf(TestObj.answerString)), result)
+    }
+
+    @Test
+    fun flattenMap_nested_jsonObj_unknown() {
+        val original = mapOf<String, Any?>(
+            "kk" to jsonObjectOf("jj" to TestObj)
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(mapOf("kk" to mapOf("jj" to TestObj.answerString)), result)
+    }
+
+    @Test
+    fun flattenMap_nested_jsonArray_unknown() {
+        val original = mapOf<String, Any?>(
+            "kk" to jsonArrayOf(TestObj)
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(mapOf("kk" to listOf(TestObj.answerString)), result)
+    }
+
+    private object TestObj{
+        val answerString = "works!"
+        override fun toString(): String = answerString
+    }
+
 }
