@@ -1,11 +1,11 @@
 package com.kcibald.services.user.handlers
 
-import com.kcibald.services.user.dao.*
+import com.kcibald.services.user.dao.SafeUser
+import com.kcibald.services.user.encodeUserIdFromDBID
 import com.kcibald.services.user.proto.AuthenticationResponse
 import com.kcibald.services.user.proto.AuthenticationResponse.AuthenticationErrorType.Companion.INVALID_CREDENTIAL
 import com.kcibald.services.user.proto.AuthenticationResponse.AuthenticationErrorType.Companion.USER_NOT_FOUND
 import com.kcibald.services.user.proto.AuthenticationResponse.Result.*
-import io.vertx.kotlin.core.json.jsonObjectOf
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -14,14 +14,13 @@ internal class AuthenticationInterfaceKtTest {
 
     @Test
     fun test_createSuccessAuthenticationResponse() {
-        val user = SafeUserInternal(
-            jsonObjectOf(
-                "_id" to "039b94f38726a43e64312c7aec33d870",
-                userNameKey to "name",
-                urlKeyKey to "url",
-                signatureKey to "signature",
-                avatarFileKey to "avatar"
-            )
+        val userId = encodeUserIdFromDBID("039b94f38726a43e64312c7aec33d870")
+
+        val user = SafeUser(
+            userId = userId,
+            userName = "name",
+            signature = "signature",
+            avatarKey = "avatar"
         )
 
         val packed = createSuccessAuthenticationResponse(user)
@@ -31,10 +30,10 @@ internal class AuthenticationInterfaceKtTest {
 
         val targetUser = (result as SuccessUser).successUser
 
-        assertEquals(user.user_id, targetUser.userId)
-        assertEquals(user.user_name, targetUser.userName)
+        assertEquals(userId, targetUser.userId)
+        assertEquals(user.userName, targetUser.userName)
         assertEquals(user.signature, targetUser.signature)
-        assertEquals(user.avatar_key, targetUser.avatarKey)
+        assertEquals(user.avatarKey, targetUser.avatarKey)
     }
 
     @Test

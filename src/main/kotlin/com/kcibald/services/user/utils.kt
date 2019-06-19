@@ -1,6 +1,6 @@
 package com.kcibald.services.user
 
-import com.kcibald.services.user.dao.SafeUserInternal
+import com.kcibald.services.user.dao.SafeUser
 import com.kcibald.services.user.handlers.EventResult
 import io.vertx.core.Vertx
 import io.vertx.core.eventbus.Message
@@ -49,13 +49,13 @@ internal inline fun <IN> MessageConsumer<IN>.coroutineHandler(
 }
 
 @Suppress("NOTHING_TO_INLINE")
-internal inline fun SafeUserInternal.transform(): com.kcibald.services.user.proto.User =
+internal inline fun SafeUser.transform(): com.kcibald.services.user.proto.User =
     com.kcibald.services.user.proto.User(
-        userId = this.user_id,
-        userName = this.user_name,
-        urlKey = this.url_key,
+        userId = this.userId,
+        userName = this.userName,
+        urlKey = this.urlKey,
         signature = this.signature,
-        avatarKey = this.avatar_key
+        avatarKey = this.avatarKey
     )
 
 private val base64Encoder = Base64.getUrlEncoder()

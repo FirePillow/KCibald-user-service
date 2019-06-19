@@ -1,6 +1,6 @@
 package com.kcibald.services.user
 
-import com.kcibald.services.user.dao.*
+import com.kcibald.services.user.dao.SafeUser
 import com.kcibald.services.user.handlers.EmptyEventResult
 import com.kcibald.services.user.handlers.EventResult
 import io.vertx.core.*
@@ -9,7 +9,6 @@ import io.vertx.core.eventbus.Message
 import io.vertx.core.eventbus.MessageConsumer
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
-import io.vertx.kotlin.core.json.jsonObjectOf
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -142,17 +141,9 @@ internal class UtilsKtTest {
         val avatarKey = "avatar"
         val userId = "XQnlUfIU1EA3-50f"
         val signature = "signature"
-        val urlKey = "url"
+        val urlKey = "user_name"
 
-        val userInternal = SafeUserInternal(
-            jsonObjectOf(
-                "_id" to "5d09e551f214d44037fb9d1f",
-                userNameKey to userName,
-                avatarFileKey to avatarKey,
-                signatureKey to signature,
-                urlKeyKey to urlKey
-            )
-        )
+        val userInternal = SafeUser(userId, userName, signature, avatarKey)
 
         val transformed = userInternal.transform()
         assertEquals(userName, transformed.userName)

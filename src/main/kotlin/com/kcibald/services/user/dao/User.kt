@@ -1,58 +1,98 @@
 package com.kcibald.services.user.dao
 
+import com.kcibald.services.user.JHelper
 import com.kcibald.services.user.encodeUserIdFromDBID
 import com.kcibald.utils.ImmutableJsonObject
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import java.util.*
 
-internal class SafeUserInternal(
+internal interface SafeUser {
+    val userId: String
+    val userName: String
+    val urlKey: String
+    val signature: String
+    val avatarKey: String
+
+    companion object {
+        internal operator fun invoke(
+            userId: String,
+            userName: String,
+            signature: String,
+            avatarKey: String
+        ): SafeUser {
+            val urlKey = userNameToURLKey(userName)
+            return object : SafeUser {
+                override val userId: String = userId
+
+                override val userName: String = userName
+
+                override val urlKey: String = urlKey
+
+                override val signature: String = signature
+
+                override val avatarKey: String = avatarKey
+            }
+        }
+
+        internal fun fromDBJson(jsonObject: JsonObject): SafeUser = SafeUserInternal(jsonObject)
+    }
+}
+
+private val notNeedURLEncodingBitSet = JHelper.makeUrlDontNeedEncodingBitSet()
+
+internal fun userNameToURLKey(userName: String): String {
+    val out = StringBuilder(userName.length)
+    for (c in userName) {
+        if (notNeedURLEncodingBitSet.get(c.toInt())) {
+            out.append(c)
+        } else {
+            out.append("-")
+        }
+    }
+    return out.toString()
+}
+
+
+private inline class SafeUserInternal(
     val jsonObject: ImmutableJsonObject
-) {
-    val user_id: String
+) : SafeUser {
+    override val userId: String
         get() = encodeUserIdFromDBID(jsonObject.getString("_id"))
 
-    val user_name: String
+    override val userName: String
         get() = jsonObject.getString(userNameKey)
 
-    val url_key: String
+    override val urlKey: String
         get() = jsonObject.getString(urlKeyKey)
 
-    val signature: String
+    override val signature: String
         get() =
             jsonObject.getString(signatureKey)
 
-    val avatar_key: String
+    override val avatarKey: String
         get() =
             jsonObject.getString(avatarFileKey)
-
-    fun unsafeExport(): JsonObject {
-        val copy = jsonObject.copy()
-        val uid = this.user_id
-        copy.remove("_id")
-        copy.put(userIdKey, uid)
-        return copy
-    }
 
 }
 
 internal inline class UserInternal(
     val jsonObject: ImmutableJsonObject
-) {
-    val user_id: String
+) : SafeUser {
+    override val userId: String
         get() = encodeUserIdFromDBID(jsonObject.getString("_id"))
 
-    val user_name: String
+    override val userName: String
         get() = jsonObject.getString(userNameKey)
 
-    val url_key: String
+    override val urlKey: String
         get() = jsonObject.getString(urlKeyKey)
 
-    val signature: String
+    override val signature: String
         get() =
             jsonObject.getString(signatureKey)
 
-    val avatar_key: String
+    override val avatarKey: String
         get() =
             jsonObject.getString(avatarFileKey)
 

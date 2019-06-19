@@ -79,7 +79,7 @@ internal class DBAccessTest {
 
         val user = dbAccess.getUserWithId(userId)!!
 
-        assertEquals(userNameAns, user.user_name)
+        assertEquals(userNameAns, user.userName)
 
         Unit
     }
@@ -105,7 +105,7 @@ internal class DBAccessTest {
         createNoiseDocument()
 
         val user = dbAccess.getUserWithName(userName).first()
-        assertEquals(urlKeyAns, user.url_key)
+        assertEquals(urlKeyAns, user.urlKey)
 
         Unit
     }
@@ -154,7 +154,7 @@ internal class DBAccessTest {
         assertEquals(signatureSet.size, users.size)
 
         users.forEach {
-            assertEquals(userName, it.user_name)
+            assertEquals(userName, it.userName)
             assertTrue(signatureSet.contains(it.signature))
             signatureSet.remove(it.signature)
         }
@@ -192,8 +192,8 @@ internal class DBAccessTest {
         val (userInternal, receivedBytes) = dbAccess.getUserAndPasswordWithEmail(email) ?: fail()
 
         assertTrue(passwordBytes contentEquals receivedBytes)
-        assertEquals(userName, userInternal.user_name)
-        assertEquals(id, userInternal.user_id)
+        assertEquals(userName, userInternal.userName)
+        assertEquals(id, userInternal.userId)
 
         Unit
     }

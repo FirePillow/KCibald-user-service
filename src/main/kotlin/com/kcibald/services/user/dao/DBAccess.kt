@@ -64,26 +64,26 @@ internal class DBAccess(vertx: Vertx, private val config: Config) {
         logger.i { "DBAccess initialization complete" }
     }
 
-    suspend fun getUserWithId(id: String): SafeUserInternal? {
+    suspend fun getUserWithId(id: String): SafeUser? {
         val dbId = encodeDBIDFromUserId(id)
         val query = JsonObject(Collections.singletonMap("_id", dbId) as Map<String, Any>)
         val jsonObject = dbClient.findOneAwait(userCollectionName, query, userFieldProjection)
-        return jsonObject?.let(::SafeUserInternal)
+        return jsonObject?.let { SafeUser.fromDBJson(it) }
     }
 
-    suspend fun getUserWithName(name: String): List<SafeUserInternal> {
+    suspend fun getUserWithName(name: String): List<SafeUser> {
         val query = JsonObject(Collections.singletonMap(userNameKey, name) as Map<String, Any>)
         val jsonObject = dbClient.findAwait(userCollectionName, query)
-        return jsonObject.map(::SafeUserInternal)
+        return jsonObject.map { SafeUser.fromDBJson(it) }
     }
 
-    suspend fun getUserWithUrlKey(urlKey: String): SafeUserInternal? {
+    suspend fun getUserWithUrlKey(urlKey: String): SafeUser? {
         val query = JsonObject(Collections.singletonMap(urlKeyKey, urlKey) as Map<String, Any>)
         val dbResult = dbClient.findOneAwait(userCollectionName, query, userFieldProjection)
-        return dbResult?.let(::SafeUserInternal)
+        return dbResult?.let { SafeUser.fromDBJson(it) }
     }
 
-    suspend fun getUserAndPasswordWithEmail(email: String): Pair<SafeUserInternal, ByteArray>? {
+    suspend fun getUserAndPasswordWithEmail(email: String): Pair<SafeUser, ByteArray>? {
         val query = JsonObject(Collections.singletonMap("$emailKey.$emailAddressKey", email) as Map<String, Any>)
         val field = (json {
             obj(
@@ -93,7 +93,7 @@ internal class DBAccess(vertx: Vertx, private val config: Config) {
         return dbClient
             .findOneAwait(userCollectionName, query, field)
             ?.let {
-                SafeUserInternal(it) to Base64.getDecoder().decode(it.getString(passwordHashKey))
+                SafeUser.fromDBJson(it) to Base64.getDecoder().decode(it.getString(passwordHashKey))
             }
     }
 
