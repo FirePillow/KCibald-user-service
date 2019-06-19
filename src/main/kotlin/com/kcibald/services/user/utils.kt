@@ -9,6 +9,7 @@ import io.vertx.core.logging.LoggerFactory
 import io.vertx.kotlin.coroutines.dispatcher
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import org.bouncycastle.util.encoders.Hex
 import java.util.*
 
 private object Utils
@@ -56,3 +57,19 @@ internal inline fun SafeUserInternal.transform(): com.kcibald.services.user.prot
         signature = this.signature,
         avatarKey = this.avatar_key
     )
+
+private val base64Encoder = Base64.getUrlEncoder()
+
+@Suppress("NOTHING_TO_INLINE")
+internal inline fun encodeUserIdFromDBID(dbId: String): String {
+    val bytes = Hex.decode(dbId)
+    return base64Encoder.encodeToString(bytes)
+}
+
+private val base64Decoder = Base64.getUrlDecoder()
+
+@Suppress("NOTHING_TO_INLINE")
+internal inline fun encodeDBIDFromUserId(userId: String): String {
+    val bytes = base64Decoder.decode(userId)
+    return Hex.toHexString(bytes)
+}

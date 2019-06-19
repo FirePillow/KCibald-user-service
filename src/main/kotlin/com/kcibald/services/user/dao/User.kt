@@ -1,20 +1,16 @@
 package com.kcibald.services.user.dao
 
+import com.kcibald.services.user.encodeUserIdFromDBID
 import com.kcibald.utils.ImmutableJsonObject
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
-import org.apache.commons.codec.binary.Hex
 import java.util.*
 
 internal class SafeUserInternal(
     val jsonObject: ImmutableJsonObject
 ) {
     val user_id: String
-        get() {
-            val id = jsonObject.getString("_id")
-            val hex = Hex.decodeHex(id)
-            return Base64.getUrlEncoder().encodeToString(hex)
-        }
+        get() = encodeUserIdFromDBID(jsonObject.getString("_id"))
 
     val user_name: String
         get() = jsonObject.getString(userNameKey)
@@ -44,11 +40,7 @@ internal inline class UserInternal(
     val jsonObject: ImmutableJsonObject
 ) {
     val user_id: String
-        get() {
-            val id = jsonObject.getString("_id")
-            val hex = Hex.decodeHex(id)
-            return Base64.getUrlEncoder().encodeToString(hex)
-        }
+        get() = encodeUserIdFromDBID(jsonObject.getString("_id"))
 
     val user_name: String
         get() = jsonObject.getString(userNameKey)

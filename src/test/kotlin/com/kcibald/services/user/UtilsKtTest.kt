@@ -41,7 +41,7 @@ internal class UtilsKtTest {
     }
 
     @Test
-    fun coroutineHandlerUnexpectErrorOverride(vertx: Vertx, context: VertxTestContext)  {
+    fun coroutineHandlerUnexpectErrorOverride(vertx: Vertx, context: VertxTestContext) {
         val answer = "oh yeah"
         val target = MockMessageConsumer()
 
@@ -54,7 +54,7 @@ internal class UtilsKtTest {
         }
 
         target.completionHandler {
-            context.verify{
+            context.verify {
                 assertEquals(answer, target.handlerResult.get())
                 context.completeNow()
             }
@@ -160,6 +160,22 @@ internal class UtilsKtTest {
         assertEquals(avatarKey, transformed.avatarKey)
         assertEquals(signature, transformed.signature)
         assertEquals(urlKey, transformed.urlKey)
+    }
+
+    @Test
+    fun encodeUserIdFromDBID() {
+        assertEquals("XQnlUfIU1EA3-50e", encodeUserIdFromDBID("5d09e551f214d44037fb9d1e"))
+        assertEquals("XQnlUfIU1EA3-50f", encodeUserIdFromDBID("5d09e551f214d44037fb9d1f"))
+        assertEquals("XQnlUfIU1EA3-50g", encodeUserIdFromDBID("5d09e551f214d44037fb9d20"))
+        assertEquals("XQnlUfIU1EA3-50k", encodeUserIdFromDBID("5d09e551f214d44037fb9d24"))
+    }
+
+    @Test
+    fun encodeDBIDFromUserId() {
+        assertEquals("5d09e551f214d44037fb9d1e", encodeDBIDFromUserId("XQnlUfIU1EA3-50e"))
+        assertEquals("5d09e551f214d44037fb9d1f", encodeDBIDFromUserId("XQnlUfIU1EA3-50f"))
+        assertEquals("5d09e551f214d44037fb9d20", encodeDBIDFromUserId("XQnlUfIU1EA3-50g"))
+        assertEquals("5d09e551f214d44037fb9d24", encodeDBIDFromUserId("XQnlUfIU1EA3-50k"))
     }
 
 

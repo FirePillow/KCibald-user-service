@@ -1,6 +1,8 @@
 package com.kcibald.services.user.dao
 
 import com.kcibald.services.user.MasterConfigSpec
+import com.kcibald.services.user.encodeDBIDFromUserId
+import com.kcibald.services.user.encodeUserIdFromDBID
 import com.kcibald.utils.i
 import com.kcibald.utils.immutable
 import com.kcibald.utils.w
@@ -14,7 +16,6 @@ import io.vertx.kotlin.core.json.jsonArrayOf
 import io.vertx.kotlin.core.json.jsonObjectOf
 import io.vertx.kotlin.core.json.obj
 import io.vertx.kotlin.ext.mongo.*
-import org.apache.commons.codec.binary.Hex
 import java.util.*
 
 internal class DBAccess(vertx: Vertx, private val config: Config) {
@@ -62,11 +63,10 @@ internal class DBAccess(vertx: Vertx, private val config: Config) {
     }
 
     private val base64Encoder = Base64.getUrlEncoder()!!
-    private val base64Decoder = Base64.getUrlDecoder()!!
 
     suspend fun getUserWithId(id: String): SafeUserInternal? {
-        val decodedId = Hex.encodeHexString(base64Decoder.decode(id))
-        val query = JsonObject(Collections.singletonMap("_id", decodedId) as Map<String, Any>)
+        val dbId = encodeDBIDFromUserId(id)
+        val query = JsonObject(Collections.singletonMap("_id", dbId) as Map<String, Any>)
         val jsonObject = dbClient.findOneAwait(userCollectionName, query, userFieldProjection)
         return jsonObject?.let(::SafeUserInternal)
     }
@@ -144,7 +144,7 @@ internal class DBAccess(vertx: Vertx, private val config: Config) {
                 passwordHashKey to rawPassword
             )
         )!!
-        return base64Encoder.encodeToString(Hex.decodeHex(documentId))
+        return encodeUserIdFromDBID(documentId)
     }
 
     @Suppress("RedundantSuspendModifier")
