@@ -19,9 +19,9 @@ internal interface SafeUser {
             userId: String,
             userName: String,
             signature: String,
-            avatarKey: String
+            avatarKey: String,
+            urlKey: String = userNameToURLKey(userName)
         ): SafeUser {
-            val urlKey = userNameToURLKey(userName)
             return object : SafeUser {
                 override val userId: String = userId
 
