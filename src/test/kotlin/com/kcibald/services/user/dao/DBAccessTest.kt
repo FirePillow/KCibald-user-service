@@ -12,8 +12,7 @@ import io.vertx.kotlin.ext.mongo.dropCollectionAwait
 import io.vertx.kotlin.ext.mongo.getCollectionsAwait
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -33,7 +32,7 @@ internal class DBAccessTest {
 
     @AfterEach
     fun tearDown() = runBlocking {
-        dbClient.dropCollectionAwait(dbAccess.userCollectionName)
+        //        dbClient.dropCollectionAwait(dbAccess.userCollectionName)
         dbAccess.close()
     }
 
@@ -73,7 +72,7 @@ internal class DBAccessTest {
             avatarKey = "avatar",
             signature = "signature",
             schoolEmail = "school@example.com",
-            rawPassword = "rfuywqyfrbjcbjz"
+            rawPassword = ByteArray(0)
         )
 
         createNoiseDocument()
@@ -100,7 +99,7 @@ internal class DBAccessTest {
             avatarKey = "avatar",
             signature = "signature",
             schoolEmail = "school@example.com",
-            rawPassword = "kajlkja;ljfdkadjf"
+            rawPassword = ByteArray(0)
         )
 
         createNoiseDocument()
@@ -144,7 +143,7 @@ internal class DBAccessTest {
                 avatarKey = "avatar",
                 signature = it,
                 schoolEmail = "school@example.com",
-                rawPassword = "kajlkja;ljfdkadjf"
+                rawPassword = ByteArray(0)
             )
         }
 
@@ -169,6 +168,36 @@ internal class DBAccessTest {
         Unit
     }
 
+    @Test
+    fun getUserAndPasswordWithEmail() = runBlocking {
+        val passwordBytes = ByteArray(10)
+        random.nextBytes(passwordBytes)
+
+        val userName = "target_user"
+        val email = "target_user@school.com"
+
+        createNoiseDocument()
+
+        val id = dbAccess.insertNewUser(
+            userName = userName,
+            urlKey = "target_user",
+            signature = "I'm the target",
+            avatarKey = "",
+            schoolEmail = email,
+            rawPassword = passwordBytes
+        )
+
+        createNoiseDocument()
+
+        val (userInternal, receivedBytes) = dbAccess.getUserAndPasswordWithEmail(email) ?: fail()
+
+        assertTrue(passwordBytes contentEquals receivedBytes)
+        assertEquals(userName, userInternal.user_name)
+        assertEquals(id, userInternal.user_id)
+
+        Unit
+    }
+
     private suspend fun createNoiseDocument() {
         repeat(10) {
             val userName = "user#noise#$it#${random.nextInt()}"
@@ -178,7 +207,7 @@ internal class DBAccessTest {
                 avatarKey = genRandomString(10),
                 signature = genRandomString(10),
                 schoolEmail = "${genRandomString(10)}@example.com",
-                rawPassword = genRandomString(10)
+                rawPassword = ByteArray(0)
             )
 
         }

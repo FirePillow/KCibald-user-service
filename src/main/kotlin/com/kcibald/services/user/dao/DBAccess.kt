@@ -16,6 +16,8 @@ import io.vertx.kotlin.core.json.jsonArrayOf
 import io.vertx.kotlin.core.json.jsonObjectOf
 import io.vertx.kotlin.core.json.obj
 import io.vertx.kotlin.ext.mongo.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.*
 
 internal class DBAccess(vertx: Vertx, private val config: Config) {
@@ -62,8 +64,6 @@ internal class DBAccess(vertx: Vertx, private val config: Config) {
         logger.i { "DBAccess initialization complete" }
     }
 
-    private val base64Encoder = Base64.getUrlEncoder()!!
-
     suspend fun getUserWithId(id: String): SafeUserInternal? {
         val dbId = encodeDBIDFromUserId(id)
         val query = JsonObject(Collections.singletonMap("_id", dbId) as Map<String, Any>)
@@ -84,11 +84,7 @@ internal class DBAccess(vertx: Vertx, private val config: Config) {
     }
 
     suspend fun getUserAndPasswordWithEmail(email: String): Pair<SafeUserInternal, ByteArray>? {
-        val query = json {
-            obj(
-                "$emailKey.$emailAddressKey" to email
-            )
-        }
+        val query = JsonObject(Collections.singletonMap("$emailKey.$emailAddressKey", email) as Map<String, Any>)
         val field = (json {
             obj(
                 passwordHashKey to 1
@@ -101,13 +97,15 @@ internal class DBAccess(vertx: Vertx, private val config: Config) {
             }
     }
 
+    private val base64Encoder = Base64.getEncoder()!!
+
     suspend fun insertNewUser(
         userName: String,
         urlKey: String,
         signature: String = "",
         avatarKey: String,
         schoolEmail: String,
-        rawPassword: String,
+        rawPassword: ByteArray,
         schoolEmailVerified: Boolean = false,
         personalEmail: String? = null,
         personalEmailVerified: Boolean = false
@@ -133,6 +131,8 @@ internal class DBAccess(vertx: Vertx, private val config: Config) {
 
 //        as the document do not have an _id field, this method WILL NOT return null
 
+        val passwordValue = base64Encoder.encodeToString(rawPassword)
+
         val documentId = dbClient.insertAwait(
             userCollectionName,
             jsonObjectOf(
@@ -141,7 +141,7 @@ internal class DBAccess(vertx: Vertx, private val config: Config) {
                 signatureKey to signature,
                 avatarFileKey to avatarKey,
                 emailKey to emailJson,
-                passwordHashKey to rawPassword
+                passwordHashKey to passwordValue
             )
         )!!
         return encodeUserIdFromDBID(documentId)
@@ -149,7 +149,9 @@ internal class DBAccess(vertx: Vertx, private val config: Config) {
 
     @Suppress("RedundantSuspendModifier")
     suspend fun close() {
-        dbClient.close()
+        withContext(Dispatchers.IO) {
+            dbClient.close()
+        }
     }
 
 }
