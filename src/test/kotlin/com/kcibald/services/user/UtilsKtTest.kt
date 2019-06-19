@@ -1,3 +1,6 @@
+// to outline the use of an double value type
+@file:Suppress("RemoveRedundantCallsOfConversionMethods")
+
 package com.kcibald.services.user
 
 import com.kcibald.services.user.dao.SafeUser
@@ -7,8 +10,11 @@ import io.vertx.core.*
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.eventbus.Message
 import io.vertx.core.eventbus.MessageConsumer
+import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
+import io.vertx.kotlin.core.json.jsonArrayOf
+import io.vertx.kotlin.core.json.jsonObjectOf
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -169,5 +175,477 @@ internal class UtilsKtTest {
         assertEquals("5d09e551f214d44037fb9d24", encodeDBIDFromUserId("XQnlUfIU1EA3-50k"))
     }
 
+    @Test
+    fun flattenMap_non_nested_primitive_null() {
+        val original = mapOf<String, Any?>(
+            "kk" to null
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(original, result)
+    }
+
+    @Test
+    fun flattenMap_non_nested_primitive_boolean() {
+        val original = mapOf<String, Any?>(
+            "kk" to true
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(original, result)
+    }
+
+    @Test
+    fun flattenMap_non_nested_primitive_integer() {
+        val original = mapOf<String, Any?>(
+            "kk" to 123
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(original, result)
+    }
+
+    @Test
+    fun flattenMap_non_nested_primitive_double() {
+        val original = mapOf<String, Any?>(
+            "kk" to 123.23.toDouble()
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(original, result)
+    }
+
+    @Test
+    fun flattenMap_non_nested_primitive_float() {
+        val original = mapOf<String, Any?>(
+            "kk" to 123.23.toFloat()
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(original, result)
+    }
+
+    @Test
+    fun flattenMap_nested_map_primitive_null() {
+        val original = mapOf<String, Any?>(
+            "kk" to mapOf("jj" to null)
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(original, result)
+    }
+
+    @Test
+    fun flattenMap_nested_map_primitive_boolean() {
+        val original = mapOf<String, Any?>(
+            "kk" to mapOf("jj" to null)
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(original, result)
+    }
+
+    @Test
+    fun flattenMap_nested_map_primitive_integer() {
+        val original = mapOf("kk" to mapOf("jj" to 123))
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(original, result)
+    }
+
+    @Test
+    fun flattenMap_nested_map_primitive_double() {
+        val original = mapOf<String, Any?>(
+            "kk" to mapOf("jj" to 123.23.toDouble())
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(original, result)
+    }
+
+    @Test
+    fun flattenMap_nested_map_primitive_float() {
+        val original = mapOf<String, Any?>(
+            "kk" to mapOf("jj" to 123.23.toFloat())
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(original, result)
+    }
+
+    @Test
+    fun flattenMap_nested_jsonObj_primitive_null() {
+        val original = mapOf<String, Any?>(
+            "kk" to jsonObjectOf("jj" to null)
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(
+            mapOf<String, Any?>(
+                "kk" to mapOf("jj" to null)
+            ),
+            result
+        )
+    }
+
+    @Test
+    fun flattenMap_nested_jsonObj_primitive_boolean() {
+        val original = mapOf<String, Any?>(
+            "kk" to mapOf("jj" to null)
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(
+            mapOf<String, Any?>(
+                "kk" to mapOf("jj" to null)
+            ),
+            result
+        )
+    }
+
+    @Test
+    fun flattenMap_nested_jsonObj_primitive_integer() {
+        val original = mapOf("kk" to jsonObjectOf("jj" to 123))
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(mapOf("kk" to mapOf("jj" to 123)), result)
+    }
+
+    @Test
+    fun flattenMap_nested_jsonObj_primitive_double() {
+        val original = mapOf<String, Any?>(
+            "kk" to jsonObjectOf("jj" to 123.23.toDouble())
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(
+            mapOf<String, Any?>(
+                "kk" to mapOf("jj" to 123.23.toDouble())
+            ),
+            result
+        )
+    }
+
+    @Test
+    fun flattenMap_nested_jsonObj_primitive_float() {
+        val original = mapOf<String, Any?>(
+            "kk" to jsonObjectOf("jj" to 123.23.toFloat())
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(
+            mapOf<String, Any?>(
+                "kk" to mapOf("jj" to 123.23.toFloat())
+            ),
+            result
+        )
+    }
+
+    @Test
+    fun flattenMap_nested_array_primitive_null() {
+        val original = mapOf<String, Any?>(
+            "kk" to arrayOf<Any?>(null)
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(
+            mapOf<String, Any?>(
+                "kk" to listOf(null)
+            ),
+            result
+        )
+    }
+
+    @Test
+    fun flattenMap_nested_array_primitive_boolean() {
+        val original = mapOf<String, Any?>(
+            "kk" to arrayOf(true)
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(
+            mapOf<String, Any?>(
+                "kk" to listOf(true)
+            ),
+            result
+        )
+    }
+
+    @Test
+    fun flattenMap_nested_array_primitive_integer() {
+        val original = mapOf<String, Any?>(
+            "kk" to arrayOf(123)
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(
+            mapOf<String, Any?>(
+                "kk" to listOf(123)
+            ),
+            result
+        )
+    }
+
+    @Test
+    fun flattenMap_nested_array_primitive_double() {
+        val original = mapOf<String, Any?>(
+            "kk" to arrayOf(123.23.toDouble())
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(
+            mapOf<String, Any?>(
+                "kk" to listOf(123.23.toDouble())
+            ),
+            result
+        )
+    }
+
+    @Test
+    fun flattenMap_nested_array_primitive_float() {
+        val original = mapOf<String, Any?>(
+            "kk" to arrayOf(123.23.toFloat())
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(
+            mapOf<String, Any?>(
+                "kk" to listOf(123.23.toFloat())
+            ),
+            result
+        )
+    }
+
+    @Test
+    fun flattenMap_nested_collection_primitive_null() {
+        val original = mapOf<String, Any?>(
+            "kk" to listOf(null)
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(original, result)
+    }
+
+    @Test
+    fun flattenMap_nested_collection_primitive_boolean() {
+        val original = mapOf<String, Any?>(
+            "kk" to listOf(true)
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(original, result)
+    }
+
+    @Test
+    fun flattenMap_nested_collection_primitive_integer() {
+        val original = mapOf<String, Any?>(
+            "kk" to listOf(123)
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(original, result)
+    }
+
+    @Test
+    fun flattenMap_nested_collection_primitive_double() {
+        val original = mapOf<String, Any?>(
+            "kk" to listOf(123.23.toDouble())
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(original, result)
+    }
+
+    @Test
+    fun flattenMap_nested_collection_primitive_float() {
+        val original = mapOf<String, Any?>(
+            "kk" to listOf(123.23.toFloat())
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(original, result)
+    }
+
+    @Test
+    fun flattenMap_nested_jsonArray_primitive_null() {
+        val original = mapOf<String, Any?>(
+            "kk" to jsonArrayOf(null)
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(
+            mapOf<String, Any?>(
+                "kk" to listOf(null)
+            ),
+            result
+        )
+    }
+
+    @Test
+    fun flattenMap_nested_jsonArray_primitive_boolean() {
+        val original = mapOf<String, Any?>(
+            "kk" to listOf(true)
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(
+            mapOf<String, Any?>(
+                "kk" to listOf(true)
+            ),
+            result
+        )
+    }
+
+    @Test
+    fun flattenMap_nested_jsonArray_primitive_integer() {
+        val original = mapOf<String, Any?>(
+            "kk" to jsonArrayOf(123)
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(
+            mapOf<String, Any?>(
+                "kk" to listOf(123)
+            ),
+            result
+        )
+    }
+
+    @Test
+    fun flattenMap_nested_jsonArray_primitive_double() {
+        val original = mapOf<String, Any?>(
+            "kk" to jsonArrayOf(123.23.toDouble())
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(
+            mapOf<String, Any?>(
+                "kk" to listOf(123.23.toDouble())
+            ),
+            result
+        )
+    }
+
+    @Test
+    fun flattenMap_nested_jsonArray_primitive_float() {
+        val original = mapOf<String, Any?>(
+            "kk" to jsonArrayOf(123.23.toFloat())
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(
+            mapOf<String, Any?>(
+                "kk" to listOf(123.23.toFloat())
+            ),
+            result
+        )
+    }
+
+    @Test
+    fun flattenMap_non_nested_string() {
+        val original = mapOf<String, Any?>(
+            "kk" to "kk"
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(original, result)
+    }
+
+    @Test
+    fun flattenMap_nested_map_string() {
+        val original = mapOf<String, Any?>(
+            "kk" to mapOf("jj" to "jj")
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(original, result)
+    }
+
+    @Test
+    fun flattenMap_nested_jsonObj_string() {
+        val original = mapOf<String, Any?>(
+            "kk" to jsonObjectOf(
+                "jj" to "jj"
+            )
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(mapOf("kk" to mapOf("jj" to "jj")), result)
+    }
+
+    @Test
+    fun flattenMap_nested_jsonArray_string() {
+        val original = mapOf<String, Any?>(
+            "kk" to jsonArrayOf("jj")
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(mapOf("kk" to listOf("jj")), result)
+    }
+
+    @Test
+    fun flattenMap_non_nested_unknown() {
+        val original = mapOf<String, Any?>(
+            "kk" to TestObj
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(mapOf("kk" to TestObj.answerString), result)
+    }
+
+    @Test
+    fun flattenMap_nested_map_unknown() {
+        val original = mapOf<String, Any?>(
+            "kk" to mapOf("jj" to TestObj)
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(mapOf("kk" to mapOf("jj" to TestObj.answerString)), result)
+    }
+
+    @Test
+    fun flattenMap_nested_array_unknown() {
+        val original = mapOf<String, Any?>(
+            "kk" to arrayOf(TestObj)
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(mapOf("kk" to listOf(TestObj.answerString)), result)
+    }
+
+    @Test
+    fun flattenMap_nested_collection_unknown() {
+        val original = mapOf<String, Any?>(
+            "kk" to listOf(TestObj)
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(mapOf("kk" to listOf(TestObj.answerString)), result)
+    }
+
+    @Test
+    fun flattenMap_nested_jsonObj_unknown() {
+        val original = mapOf<String, Any?>(
+            "kk" to jsonObjectOf("jj" to TestObj)
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(mapOf("kk" to mapOf("jj" to TestObj.answerString)), result)
+    }
+
+    @Test
+    fun flattenMap_nested_jsonArray_unknown() {
+        val original = mapOf<String, Any?>(
+            "kk" to jsonArrayOf(TestObj)
+        )
+        val jsonObject = JsonObject(original)
+        val result = jsonObject.flattenedMap
+        assertEquals(mapOf("kk" to listOf(TestObj.answerString)), result)
+    }
+
+    private object TestObj{
+        val answerString = "works!"
+        override fun toString(): String = answerString
+    }
 
 }
