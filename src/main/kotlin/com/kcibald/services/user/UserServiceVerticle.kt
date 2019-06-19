@@ -2,6 +2,7 @@ package com.kcibald.services.user
 
 import com.kcibald.services.user.dao.DBAccess
 import com.kcibald.services.user.handlers.AuthenticationInterface
+import com.kcibald.services.user.handlers.DescribeUserInterface
 import com.kcibald.utils.i
 import com.uchuhimo.konf.Config
 import io.vertx.core.Vertx
@@ -32,6 +33,7 @@ class UserServiceVerticle : CoroutineVerticle() {
 
         logger.i { "binding services" }
         AuthenticationInterface(sharedRuntimeData).bind(vertx.eventBus())
+        DescribeUserInterface(sharedRuntimeData).bind(vertx.eventBus())
     }
 
     internal lateinit var dbaccess: DBAccess
