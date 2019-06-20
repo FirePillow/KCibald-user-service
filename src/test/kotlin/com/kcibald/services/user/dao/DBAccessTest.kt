@@ -2,7 +2,6 @@ package com.kcibald.services.user.dao
 
 import com.kcibald.services.user.genRandomString
 import com.kcibald.services.user.load
-import com.mongodb.MongoWriteException
 import com.uchuhimo.konf.Config
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
@@ -166,11 +165,31 @@ internal class DBAccessTest {
     @Test
     fun getUserWithUrlKey() = runBlocking {
         dbAccess.initialize()
+        val urlKey = "url-key"
+
+        createNoiseDocument()
+
+        val id = dbAccess.insertNewUser(
+            userName = "url key",
+            urlKey = urlKey,
+            signature = "sig",
+            avatarKey = "avtar",
+            schoolEmail = "email",
+            rawPassword = ByteArray(0)
+        )
+
+        createNoiseDocument()
+
+        val dbResult = dbAccess.getUserWithUrlKey(urlKey) ?: fail()
+        assertEquals(id, dbResult.userId)
+
         Unit
     }
 
     @Test
     fun getUserAndPasswordWithEmail() = runBlocking {
+        dbAccess.initialize()
+
         val passwordBytes = ByteArray(10)
         random.nextBytes(passwordBytes)
 
@@ -197,6 +216,12 @@ internal class DBAccessTest {
         assertEquals(id, userInternal.userId)
 
         Unit
+    }
+
+    @Test
+    fun insertUser_conflict() = runBlocking {
+        dbAccess.initialize()
+
     }
 
     private suspend fun createNoiseDocument() {
