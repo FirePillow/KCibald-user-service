@@ -11,3 +11,8 @@ message User {
     string signature = 4;
     string avatar_key = 5;
 }
+
+message SafeUpdateOperation {
+    string previous = 1;
+    string after = 2;
+}
