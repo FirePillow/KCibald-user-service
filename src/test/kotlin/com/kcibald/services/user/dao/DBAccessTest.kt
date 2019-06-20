@@ -2,6 +2,7 @@ package com.kcibald.services.user.dao
 
 import com.kcibald.services.user.genRandomString
 import com.kcibald.services.user.load
+import com.mongodb.MongoWriteException
 import com.uchuhimo.konf.Config
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
@@ -32,7 +33,7 @@ internal class DBAccessTest {
 
     @AfterEach
     fun tearDown() = runBlocking {
-        //        dbClient.dropCollectionAwait(dbAccess.userCollectionName)
+        dbClient.dropCollectionAwait(dbAccess.userCollectionName)
         dbAccess.close()
     }
 

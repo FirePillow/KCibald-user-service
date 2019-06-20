@@ -1,0 +1,13 @@
+syntax = "proto3";
+package com.kcibald.services.user.proto;
+
+message Empty {
+}
+
+message User {
+    string user_id = 1;
+    string user_name = 2;
+    string url_key = 3;
+    string signature = 4;
+    string avatar_key = 5;
+}

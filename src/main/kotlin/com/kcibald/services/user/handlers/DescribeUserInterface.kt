@@ -54,7 +54,7 @@ internal class DescribeUserInterface(sharedRuntimeData: SharedRuntimeData) : Ser
 
 internal val unexpectedErrorEventResult = ProtobufEventResult(
     DescribeUserResponse(
-        result = DescribeUserResponse.Result_.SystemErrorMessage(
+        result = DescribeUserResponse.Result.SystemErrorMessage(
             "unexpected error"
         )
     )
@@ -62,7 +62,7 @@ internal val unexpectedErrorEventResult = ProtobufEventResult(
 
 internal val databaseErrorEventResult = ProtobufEventResult(
     DescribeUserResponse(
-        result = DescribeUserResponse.Result_.SystemErrorMessage(
+        result = DescribeUserResponse.Result.SystemErrorMessage(
             "database error"
         )
     )
@@ -70,7 +70,7 @@ internal val databaseErrorEventResult = ProtobufEventResult(
 
 internal val userNotFoundEventResult = ProtobufEventResult(
     DescribeUserResponse(
-        DescribeUserResponse.Result_.UserNotFound(Empty())
+        DescribeUserResponse.Result.UserNotFound(Empty())
     )
 )
 
@@ -78,7 +78,7 @@ internal fun packIndividual(result: SafeUser?): ProtobufEventResult<DescribeUser
     return if (result != null) {
         ProtobufEventResult(
             DescribeUserResponse(
-                DescribeUserResponse.Result_.SingleUserResult(
+                DescribeUserResponse.Result.SingleUserResult(
                     DescribeUserResponse.SuccessSingleUserResult(result.transform())
                 )
             )
@@ -92,7 +92,7 @@ internal fun packMultiple(result: List<User>): EventResult {
     return if (result.isNotEmpty())
         ProtobufEventResult(
             DescribeUserResponse(
-                DescribeUserResponse.Result_.MultiUserResult(
+                DescribeUserResponse.Result.MultiUserResult(
                     DescribeUserResponse.SuccessMultiUserResult(result)
                 )
             )

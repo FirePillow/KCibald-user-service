@@ -15,8 +15,8 @@ class DescribeUserInterfaceKtTest {
         message as DescribeUserResponse
 
         val result = message.result
-        assertTrue(result is DescribeUserResponse.Result_.SystemErrorMessage)
-        result as DescribeUserResponse.Result_.SystemErrorMessage
+        assertTrue(result is DescribeUserResponse.Result.SystemErrorMessage)
+        result as DescribeUserResponse.Result.SystemErrorMessage
 
         assertEquals("unexpected error", result.systemErrorMessage)
     }
@@ -28,8 +28,8 @@ class DescribeUserInterfaceKtTest {
         message as DescribeUserResponse
 
         val result = message.result
-        assertTrue(result is DescribeUserResponse.Result_.SystemErrorMessage)
-        result as DescribeUserResponse.Result_.SystemErrorMessage
+        assertTrue(result is DescribeUserResponse.Result.SystemErrorMessage)
+        result as DescribeUserResponse.Result.SystemErrorMessage
 
         assertEquals("database error", result.systemErrorMessage)
     }
@@ -41,7 +41,7 @@ class DescribeUserInterfaceKtTest {
         message as DescribeUserResponse
 
         val result = message.result
-        assertTrue(result is DescribeUserResponse.Result_.UserNotFound)
+        assertTrue(result is DescribeUserResponse.Result.UserNotFound)
     }
 
     @Test
@@ -65,8 +65,8 @@ class DescribeUserInterfaceKtTest {
         message as DescribeUserResponse
 
         val result = message.result
-        assertTrue(result is DescribeUserResponse.Result_.SingleUserResult)
-        result as DescribeUserResponse.Result_.SingleUserResult
+        assertTrue(result is DescribeUserResponse.Result.SingleUserResult)
+        result as DescribeUserResponse.Result.SingleUserResult
 
         val resultUser = result.singleUserResult.result!!
         resultUser.assertEqualsTo(user)
@@ -107,9 +107,9 @@ class DescribeUserInterfaceKtTest {
         assertTrue(message is DescribeUserResponse)
         message as DescribeUserResponse
         val result = message.result
-        assertTrue(result is DescribeUserResponse.Result_.MultiUserResult)
+        assertTrue(result is DescribeUserResponse.Result.MultiUserResult)
 
-        result as DescribeUserResponse.Result_.MultiUserResult
+        result as DescribeUserResponse.Result.MultiUserResult
         result.multiUserResult.result.forEach {
             assertTrue(list.remove(it))
         }
