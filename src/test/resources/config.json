@@ -6,7 +6,12 @@
   },
   "user_collection": {
     "collection_name": "users_collection",
-    "indexes": {}
+    "indexes": {
+      "user_name": 1
+    },
+    "unique_indexes": {
+      "url_key": 1
+    }
   },
   "auth": {
     "event_bus_name": "event_bus"

@@ -3,9 +3,12 @@ package com.kcibald.services.user.dao
 import com.kcibald.services.user.MasterConfigSpec
 import com.kcibald.services.user.encodeDBIDFromUserId
 import com.kcibald.services.user.encodeUserIdFromDBID
+import com.kcibald.services.user.genRandomString
+import com.kcibald.utils.d
 import com.kcibald.utils.i
 import com.kcibald.utils.immutable
 import com.kcibald.utils.w
+import com.mongodb.MongoWriteException
 import com.uchuhimo.konf.Config
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
@@ -61,6 +64,14 @@ internal class DBAccess(vertx: Vertx, private val config: Config) {
         } else {
             logger.i { "indexes empty, not creating indexes" }
         }
+        logger.i { "creating unique index on user collection (name: $userCollectionName)" }
+        val uniqueIndexes = config[MasterConfigSpec.UserCollection.unique_indexes]
+        if (uniqueIndexes.isNotEmpty()) {
+            val indexQuery = JsonObject(uniqueIndexes)
+            val indexOption = indexOptionsOf().unique(true)
+            dbClient.createIndexWithOptionsAwait(userCollectionName, indexQuery, indexOption)
+            logger.i { "unique index empty, not creating unique indexes" }
+        }
         logger.i { "DBAccess initialization complete" }
     }
 
@@ -106,10 +117,11 @@ internal class DBAccess(vertx: Vertx, private val config: Config) {
         avatarKey: String,
         schoolEmail: String,
         rawPassword: ByteArray,
+        tolerateUrlKeySpin: Boolean = true,
         schoolEmailVerified: Boolean = false,
         personalEmail: String? = null,
         personalEmailVerified: Boolean = false
-    ): String {
+    ): SafeUser {
 
         val emailJson = jsonArrayOf(
             jsonObjectOf(
@@ -133,19 +145,59 @@ internal class DBAccess(vertx: Vertx, private val config: Config) {
 
         val passwordValue = base64Encoder.encodeToString(rawPassword)
 
-        val documentId = dbClient.insertAwait(
-            userCollectionName,
-            jsonObjectOf(
-                userNameKey to userName,
-                urlKeyKey to urlKey,
-                signatureKey to signature,
-                avatarFileKey to avatarKey,
-                emailKey to emailJson,
-                passwordHashKey to passwordValue
-            )
-        )!!
-        return encodeUserIdFromDBID(documentId)
+        var documentId: String? = null
+        var currentUrlKey = urlKey
+        for (i in 1..1000) {
+            try {
+                documentId = dbClient.insertAwait(
+                    userCollectionName,
+                    jsonObjectOf(
+                        userNameKey to userName,
+                        urlKeyKey to currentUrlKey,
+                        signatureKey to signature,
+                        avatarFileKey to avatarKey,
+                        emailKey to emailJson,
+                        passwordHashKey to passwordValue
+                    )
+                )!!
+                break
+            } catch (e: MongoWriteException) {
+                if (e.error.code == 11000) {
+                    if (tolerateUrlKeySpin) {
+                        logger.d { "url key collision for user with name $userName, collide url key: $currentUrlKey" }
+//                    potential flood attack !
+//                    if the attacker have drain all the possible combination,
+//                    this will be spin for 1000 times
+                        val previous = currentUrlKey
+                        currentUrlKey = urlKey + "-" + genRandomString(3)
+                        logger.d { "spinning from $previous -> $currentUrlKey" }
+                    } else {
+                        throw URLKeyDuplicationException
+                    }
+                } else {
+                    throw e
+                }
+            }
+        }
+
+        if (documentId == null) {
+            val message =
+                "url key spin failed for user name $userName, target url key $urlKey, current iteration $currentUrlKey"
+            logger.warn(message)
+            throw RuntimeException(message)
+        }
+
+        val userId = encodeUserIdFromDBID(documentId)
+        return SafeUser(
+            userId,
+            userName,
+            signature,
+            avatarKey,
+            currentUrlKey
+        )
     }
+
+    internal object URLKeyDuplicationException : Throwable()
 
     @Suppress("RedundantSuspendModifier")
     suspend fun close() {

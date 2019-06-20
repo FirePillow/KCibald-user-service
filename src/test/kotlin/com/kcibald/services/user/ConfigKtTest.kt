@@ -1,5 +1,6 @@
 package com.kcibald.services.user
 
+import com.kcibald.services.user.dao.urlKeyKey
 import com.uchuhimo.konf.Config
 import io.vertx.core.json.JsonObject
 import io.vertx.kotlin.core.json.jsonObjectOf
@@ -47,6 +48,16 @@ internal class ConfigKtTest {
     @Test
     fun auth_event_bus_name() {
         assertEquals("event_bus", config[MasterConfigSpec.AuthenticationConfig.event_bus_name])
+    }
+
+    @Test
+    fun user_collection_unique_index() {
+        assertEquals(mapOf(urlKeyKey to 1), config[MasterConfigSpec.UserCollection.unique_indexes])
+    }
+
+    @Test
+    fun user_collection_index() {
+        assertEquals(mapOf(urlKeyKey to 1), config[MasterConfigSpec.UserCollection.unique_indexes])
     }
 
     /**

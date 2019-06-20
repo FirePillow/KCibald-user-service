@@ -24,7 +24,11 @@ internal object MasterConfigSpec : ConfigSpec("") {
         val indexes by optional(
             mapOf(
                 "$emailKey.$emailAddressKey" to 1,
-                userNameKey to 1,
+                userNameKey to 1
+            )
+        )
+        val unique_indexes by optional(
+            mapOf(
                 urlKeyKey to 1
             )
         )

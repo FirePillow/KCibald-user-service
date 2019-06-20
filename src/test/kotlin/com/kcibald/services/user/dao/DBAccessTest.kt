@@ -73,7 +73,7 @@ internal class DBAccessTest {
             signature = "signature",
             schoolEmail = "school@example.com",
             rawPassword = ByteArray(0)
-        )
+        ).userId
 
         createNoiseDocument()
 
@@ -176,7 +176,7 @@ internal class DBAccessTest {
             avatarKey = "avtar",
             schoolEmail = "email",
             rawPassword = ByteArray(0)
-        )
+        ).userId
 
         createNoiseDocument()
 
@@ -205,7 +205,7 @@ internal class DBAccessTest {
             avatarKey = "",
             schoolEmail = email,
             rawPassword = passwordBytes
-        )
+        ).userId
 
         createNoiseDocument()
 
@@ -219,9 +219,63 @@ internal class DBAccessTest {
     }
 
     @Test
-    fun insertUser_conflict() = runBlocking {
+    fun insertUser_conflict_tolerateUrlKeySpin() = runBlocking {
         dbAccess.initialize()
 
+        val userName = "user name"
+        val urlKey = "user-name"
+
+        dbAccess.insertNewUser(
+            userName,
+            urlKey,
+            avatarKey = "",
+            schoolEmail = "",
+            rawPassword = ByteArray(0)
+        )
+
+        val after = dbAccess.insertNewUser(
+            userName,
+            urlKey,
+            avatarKey = "",
+            schoolEmail = "",
+            rawPassword = ByteArray(0)
+        )
+
+        assertNotEquals(urlKey, after.urlKey)
+        assertTrue(after.urlKey.startsWith(urlKey))
+
+        Unit
+    }
+
+    @Test
+    fun insertUser_conflict_non_tolerateUrlKeySpin() = runBlocking {
+        dbAccess.initialize()
+
+        val userName = "user name"
+        val urlKey = "user-name"
+
+        dbAccess.insertNewUser(
+            userName,
+            urlKey,
+            avatarKey = "",
+            schoolEmail = "",
+            rawPassword = ByteArray(0)
+        )
+
+        assertThrows(DBAccess.URLKeyDuplicationException::class.java) {
+            runBlocking {
+                dbAccess.insertNewUser(
+                    userName,
+                    urlKey,
+                    avatarKey = "",
+                    schoolEmail = "",
+                    rawPassword = ByteArray(0),
+                    tolerateUrlKeySpin = false
+                )
+            }
+        }
+
+        Unit
     }
 
     private suspend fun createNoiseDocument() {
