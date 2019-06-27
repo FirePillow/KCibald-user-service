@@ -15,7 +15,8 @@ import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
 import io.vertx.kotlin.core.json.jsonArrayOf
 import io.vertx.kotlin.core.json.jsonObjectOf
-import org.junit.jupiter.api.Assertions.assertEquals
+import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import java.util.concurrent.TimeUnit
@@ -643,9 +644,27 @@ internal class UtilsKtTest {
         assertEquals(mapOf("kk" to listOf(TestObj.answerString)), result)
     }
 
-    private object TestObj{
+    private object TestObj {
         val answerString = "works!"
         override fun toString(): String = answerString
+    }
+
+    @Test
+    fun password_fail(vertx: Vertx, context: VertxTestContext) = runBlocking {
+        val password = "password*&#\$@#831K"
+        val hashed = hashPassword(vertx, password)
+        assertFalse(passwordMatches(vertx, hashed, "not password"))
+        context.completeNow()
+        Unit
+    }
+
+    @Test
+    fun password_pass(vertx: Vertx, context: VertxTestContext) = runBlocking {
+        val password = "password*&#\$@#831K"
+        val hashed = hashPassword(vertx, password)
+        assertTrue(passwordMatches(vertx, hashed, password))
+        context.completeNow()
+        Unit
     }
 
 }
