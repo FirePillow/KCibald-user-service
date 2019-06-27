@@ -49,12 +49,10 @@ internal class DBAccessTest {
     }
 
     @Test
-    fun initialize(vertx: Vertx, context: VertxTestContext) = runBlocking {
+    fun initialize() = runBlocking {
         dbAccess.initialize()
         val collections = dbClient.getCollectionsAwait()
         assertTrue(collections.contains(dbAccess.userCollectionName))
-        context.completeNow()
-
         Unit
     }
 
