@@ -20,10 +20,6 @@ message UpdateUserInfoRequest {
 
 message UpdateUserInfoResponse {
     GeneralResponseTypes responseType = 1;
-    oneof error_message {
-        string content = 2;
-        Empty non = 3;
-    }
 
     enum GeneralResponseTypes {
         SUCCESS = 0;

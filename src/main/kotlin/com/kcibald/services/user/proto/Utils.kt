@@ -27,6 +27,19 @@ data class User(
     }
 }
 
+data class SafeUpdateOperation(
+    val previous: String = "",
+    val after: String = "",
+    val unknownFields: Map<Int, pbandk.UnknownField> = emptyMap()
+) : pbandk.Message<SafeUpdateOperation> {
+    override operator fun plus(other: SafeUpdateOperation?) = protoMergeImpl(other)
+    override val protoSize by lazy { protoSizeImpl() }
+    override fun protoMarshal(m: pbandk.Marshaller) = protoMarshalImpl(m)
+    companion object : pbandk.Message.Companion<SafeUpdateOperation> {
+        override fun protoUnmarshal(u: pbandk.Unmarshaller) = SafeUpdateOperation.protoUnmarshalImpl(u)
+    }
+}
+
 private fun Empty.protoMergeImpl(plus: Empty?): Empty = plus?.copy(
     unknownFields = unknownFields + plus.unknownFields
 ) ?: this
@@ -86,6 +99,35 @@ private fun User.Companion.protoUnmarshalImpl(protoUnmarshal: pbandk.Unmarshalle
         26 -> urlKey = protoUnmarshal.readString()
         34 -> signature = protoUnmarshal.readString()
         42 -> avatarKey = protoUnmarshal.readString()
+        else -> protoUnmarshal.unknownField()
+    }
+}
+
+private fun SafeUpdateOperation.protoMergeImpl(plus: SafeUpdateOperation?): SafeUpdateOperation = plus?.copy(
+    unknownFields = unknownFields + plus.unknownFields
+) ?: this
+
+private fun SafeUpdateOperation.protoSizeImpl(): Int {
+    var protoSize = 0
+    if (previous.isNotEmpty()) protoSize += pbandk.Sizer.tagSize(1) + pbandk.Sizer.stringSize(previous)
+    if (after.isNotEmpty()) protoSize += pbandk.Sizer.tagSize(2) + pbandk.Sizer.stringSize(after)
+    protoSize += unknownFields.entries.sumBy { it.value.size() }
+    return protoSize
+}
+
+private fun SafeUpdateOperation.protoMarshalImpl(protoMarshal: pbandk.Marshaller) {
+    if (previous.isNotEmpty()) protoMarshal.writeTag(10).writeString(previous)
+    if (after.isNotEmpty()) protoMarshal.writeTag(18).writeString(after)
+    if (unknownFields.isNotEmpty()) protoMarshal.writeUnknownFields(unknownFields)
+}
+
+private fun SafeUpdateOperation.Companion.protoUnmarshalImpl(protoUnmarshal: pbandk.Unmarshaller): SafeUpdateOperation {
+    var previous = ""
+    var after = ""
+    while (true) when (protoUnmarshal.readTag()) {
+        0 -> return SafeUpdateOperation(previous, after, protoUnmarshal.unknownFields())
+        10 -> previous = protoUnmarshal.readString()
+        18 -> after = protoUnmarshal.readString()
         else -> protoUnmarshal.unknownField()
     }
 }
