@@ -196,9 +196,68 @@ internal class DBAccess(vertx: Vertx, private val config: Config) {
         )
     }
 
-    internal object URLKeyDuplicationException : Throwable()
+    internal object URLKeyDuplicationException : RuntimeException("key duplication occurs", null, false, false)
 
-    @Suppress("RedundantSuspendModifier")
+    suspend fun updateUserName(
+        before: String,
+        after: String,
+        tolerateUrlKeySpin: Boolean = true,
+        userId: String? = null,
+        urlKey: String? = null
+    ): Boolean {
+        val query = makeUrlKeyOrUserIdQuery(urlKey, userId)
+
+        query.put(userNameKey, before)
+
+        val originalUrlKey = userNameToURLKey(after)
+        var currentUrlKey = originalUrlKey
+        for (i in 1..1000) {
+            try {
+                val result = dbClient.updateCollectionAwait(
+                    userCollectionName,
+                    query,
+                    jsonObjectOf(
+                        "\$set" to jsonObjectOf(
+                            userNameKey to after,
+                            urlKeyKey to currentUrlKey
+                        )
+                    )
+                )
+
+                return result.docModified == 1.toLong()
+            } catch (e: MongoWriteException) {
+                if (e.error.code == 11000) {
+                    if (tolerateUrlKeySpin) {
+                        logger.d { "url key collision for user with name $before, collide url key: $currentUrlKey" }
+                        val previous = currentUrlKey
+                        currentUrlKey = originalUrlKey + "-" + genRandomString(3)
+                        logger.d { "spinning from $previous -> $currentUrlKey" }
+                    } else {
+                        throw URLKeyDuplicationException
+                    }
+                } else {
+                    throw e
+                }
+            }
+        }
+
+        val message =
+            "url key spin failed for user name $before when updating user name," +
+                    " target url key $urlKey, current iteration $currentUrlKey"
+        logger.warn(message)
+        throw RuntimeException(message)
+    }
+
+    private fun makeUrlKeyOrUserIdQuery(urlKey: String?, userId: String?): JsonObject {
+        if (urlKey == null && userId == null)
+            throw IllegalArgumentException("at least urlKey or userId should be non-null")
+
+        return if (urlKey != null)
+            jsonObjectOf(urlKeyKey to urlKey)
+        else
+            jsonObjectOf("_id" to encodeDBIDFromUserId(userId!!))
+    }
+
     suspend fun close() {
         withContext(Dispatchers.IO) {
             dbClient.close()

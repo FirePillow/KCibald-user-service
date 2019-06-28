@@ -278,6 +278,82 @@ internal class DBAccessTest {
         Unit
     }
 
+    @Test
+    fun updateUserName() = runBlocking {
+        dbAccess.initialize()
+
+        createNoiseDocument()
+
+        val originalUserName = "original"
+
+        val id = dbAccess.insertNewUser(
+            userName = originalUserName,
+            signature = "",
+            avatarKey = "",
+            schoolEmail = "",
+            rawPassword = ByteArray(0),
+            urlKey = userNameToURLKey(originalUserName)
+        )
+
+        createNoiseDocument()
+
+        val newUserName = "new"
+
+        dbAccess.updateUserName(originalUserName, newUserName, userId = id.userId)
+
+        val newUser = dbAccess.getUserWithId(id.userId) ?: fail()
+
+        assertEquals(newUserName, newUser.userName)
+        assertEquals(userNameToURLKey(newUserName), newUser.urlKey)
+
+        Unit
+    }
+
+    @Test
+    fun updateUserName_overlap() = runBlocking {
+        dbAccess.initialize()
+
+        createNoiseDocument()
+
+        val overLay = "overlay"
+
+        val overLayOriUrlKey = userNameToURLKey(overLay)
+
+        dbAccess.insertNewUser(
+            userName = overLay,
+            schoolEmail = "",
+            rawPassword = ByteArray(0),
+            urlKey = overLayOriUrlKey,
+            avatarKey = ""
+        )
+
+        val originalUserName = "original"
+
+        val id = dbAccess.insertNewUser(
+            userName = originalUserName,
+            signature = "",
+            avatarKey = "",
+            schoolEmail = "",
+            rawPassword = ByteArray(0),
+            urlKey = userNameToURLKey(originalUserName)
+        )
+
+        createNoiseDocument()
+
+        assertTrue(dbAccess.updateUserName(originalUserName, overLay, userId = id.userId))
+
+        val newUser = dbAccess.getUserWithId(id.userId) ?: fail()
+
+        assertEquals(overLay, newUser.userName)
+        assertNotEquals(overLayOriUrlKey, newUser.urlKey)
+        assertTrue(
+            newUser.urlKey.startsWith("$overLayOriUrlKey-"),
+            "incorrect url key spin replacement, get ${newUser.urlKey}"
+        )
+
+        Unit
+    }
+
     private suspend fun createNoiseDocument() {
         repeat(10) {
             val userName = "user#noise#$it#${random.nextInt()}"
