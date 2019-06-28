@@ -51,13 +51,8 @@ internal class ConfigKtTest {
     }
 
     @Test
-    fun user_collection_unique_index() {
-        assertEquals(mapOf(urlKeyKey to 1), config[MasterConfigSpec.UserCollection.unique_indexes])
-    }
-
-    @Test
     fun user_collection_index() {
-        assertEquals(mapOf(urlKeyKey to 1), config[MasterConfigSpec.UserCollection.unique_indexes])
+        assertEquals(mapOf(urlKeyKey to 1), config[MasterConfigSpec.UserCollection.indexes])
     }
 
     /**

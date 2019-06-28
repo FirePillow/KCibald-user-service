@@ -65,13 +65,12 @@ internal class DBAccess(vertx: Vertx, private val config: Config) {
             logger.i { "indexes empty, not creating indexes" }
         }
         logger.i { "creating unique index on user collection (name: $userCollectionName)" }
-        val uniqueIndexes = config[MasterConfigSpec.UserCollection.unique_indexes]
-        if (uniqueIndexes.isNotEmpty()) {
-            val indexQuery = JsonObject(uniqueIndexes)
-            val indexOption = indexOptionsOf().unique(true)
-            dbClient.createIndexWithOptionsAwait(userCollectionName, indexQuery, indexOption)
-            logger.i { "unique index empty, not creating unique indexes" }
-        }
+        val indexQuery = jsonObjectOf(
+            urlKeyKey to 1
+        )
+        val indexOption = indexOptionsOf().unique(true)
+        dbClient.createIndexWithOptionsAwait(userCollectionName, indexQuery, indexOption)
+        logger.i { "unique index empty, not creating unique indexes" }
         logger.i { "DBAccess initialization complete" }
     }
 
