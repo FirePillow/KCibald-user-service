@@ -23,7 +23,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.*
 
-internal class DBAccess(vertx: Vertx, private val config: Config) {
+internal class DBAccess(private val vertx: Vertx, private val config: Config) {
 
     internal val dbClient =
         MongoClient.createShared(
@@ -246,6 +246,25 @@ internal class DBAccess(vertx: Vertx, private val config: Config) {
                     " target url key $urlKey, current iteration $currentUrlKey"
         logger.warn(message)
         throw RuntimeException(message)
+    }
+
+    suspend fun updateSignature(
+        before: String,
+        after: String,
+        userId: String? = null,
+        urlKey: String? = null
+    ): Boolean {
+        val query = makeUrlKeyOrUserIdQuery(urlKey, userId)
+
+        query.put(signatureKey, before)
+
+        val result = dbClient.updateCollectionAwait(
+            userCollectionName,
+            query,
+            jsonObjectOf("\$set" to jsonObjectOf(signatureKey to after))
+        )
+
+        return result.docModified == 1.toLong()
     }
 
     private fun makeUrlKeyOrUserIdQuery(urlKey: String?, userId: String?): JsonObject {

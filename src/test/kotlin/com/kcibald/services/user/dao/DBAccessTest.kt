@@ -354,6 +354,33 @@ internal class DBAccessTest {
         Unit
     }
 
+    @Test
+    fun updateSignature() = runBlocking {
+        dbAccess.initialize()
+
+        createNoiseDocument()
+
+        val original = dbAccess.insertNewUser(
+            userName = "user-name",
+            urlKey = "user-name",
+            signature = "before",
+            avatarKey = "",
+            schoolEmail = "",
+            rawPassword = ByteArray(0)
+        )
+
+        createNoiseDocument()
+
+        val answer = "answer"
+        assertTrue(dbAccess.updateSignature(original.signature, answer, original.userId))
+
+        val after = dbAccess.getUserWithId(original.userId) ?: fail()
+
+        assertEquals(answer, after.signature)
+
+        Unit
+    }
+
     private suspend fun createNoiseDocument() {
         repeat(10) {
             val userName = "user#noise#$it#${random.nextInt()}"
