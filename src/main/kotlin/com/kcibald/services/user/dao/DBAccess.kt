@@ -1,9 +1,6 @@
 package com.kcibald.services.user.dao
 
-import com.kcibald.services.user.MasterConfigSpec
-import com.kcibald.services.user.encodeDBIDFromUserId
-import com.kcibald.services.user.encodeUserIdFromDBID
-import com.kcibald.services.user.genRandomString
+import com.kcibald.services.user.*
 import com.kcibald.utils.d
 import com.kcibald.utils.i
 import com.kcibald.utils.immutable
@@ -14,10 +11,7 @@ import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.core.logging.LoggerFactory
 import io.vertx.ext.mongo.MongoClient
-import io.vertx.kotlin.core.json.json
-import io.vertx.kotlin.core.json.jsonArrayOf
-import io.vertx.kotlin.core.json.jsonObjectOf
-import io.vertx.kotlin.core.json.obj
+import io.vertx.kotlin.core.json.*
 import io.vertx.kotlin.ext.mongo.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -281,6 +275,39 @@ internal class DBAccess(private val vertx: Vertx, private val config: Config) {
             userCollectionName,
             query,
             jsonObjectOf("\$set" to jsonObjectOf(avatarFileKey to after))
+        )
+
+        return result.docMatched == 1.toLong()
+    }
+
+    suspend fun updatePassword(
+        before: String,
+        after: String,
+        userId: String? = null,
+        urlKey: String? = null
+    ): Boolean {
+        val query = makeUrlKeyOrUserIdQuery(urlKey, userId)
+
+        val original = dbClient.findOneAwait(
+            userCollectionName,
+            query,
+            jsonObjectOf(passwordHashKey to 1)
+        ) ?: return false
+
+        val originalId: String = original["_id"]
+        val originalPassword: String = original[passwordHashKey]
+        val hash = Base64.getDecoder().decode(originalPassword)
+
+        if (!passwordMatches(vertx, hash, before))
+            return false
+
+        val result = dbClient.updateCollectionAwait(
+            userCollectionName,
+            jsonObjectOf(
+                "_id" to originalId,
+                passwordHashKey to originalPassword
+            ),
+            jsonObjectOf("\$set" to jsonObjectOf(passwordHashKey to hashPassword(vertx, after)))
         )
 
         return result.docMatched == 1.toLong()

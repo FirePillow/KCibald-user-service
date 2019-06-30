@@ -1,7 +1,9 @@
 package com.kcibald.services.user.dao
 
 import com.kcibald.services.user.genRandomString
+import com.kcibald.services.user.hashPassword
 import com.kcibald.services.user.load
+import com.kcibald.services.user.passwordMatches
 import com.uchuhimo.konf.Config
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
@@ -403,6 +405,102 @@ internal class DBAccessTest {
         val after = dbAccess.getUserWithId(original.userId) ?: fail()
 
         assertEquals(answer, after.avatarKey)
+
+        Unit
+    }
+
+    @Test
+    fun updateAvatar_unsafe() = runBlocking {
+        dbAccess.initialize()
+
+        createNoiseDocument()
+
+        val original = dbAccess.insertNewUser(
+            userName = "",
+            urlKey = "",
+            avatarKey = "",
+            schoolEmail = "",
+            rawPassword = ByteArray(0)
+        )
+
+        createNoiseDocument()
+
+        assertFalse(dbAccess.updateAvatar("before", "after", original.userId))
+
+        Unit
+    }
+
+    @Test
+    fun updatePassword(vertx: Vertx, vertxTestContext: VertxTestContext) = runBlocking {
+        dbAccess.initialize()
+
+        createNoiseDocument()
+
+        val rawOriginalPassword = "password*@^!&^&^&^@&#^|"
+        val rawOriginal = hashPassword(vertx, rawOriginalPassword)
+
+        val schoolEmail = "school@email"
+
+        val user = dbAccess.insertNewUser(
+            userName = "",
+            urlKey = "",
+            avatarKey = "",
+            schoolEmail = schoolEmail,
+            rawPassword = rawOriginal
+        )
+
+        createNoiseDocument()
+
+        val newPassword = "newPassword*&*^#@"
+
+        assertTrue(
+            dbAccess.updatePassword(
+                rawOriginalPassword,
+                newPassword,
+                userId = user.userId
+            )
+        )
+
+        val (_, updatedPassword) = dbAccess.getUserAndPasswordWithEmail(schoolEmail)?: fail()
+
+        assertTrue(passwordMatches(vertx, updatedPassword, newPassword))
+
+        vertxTestContext.completeNow()
+
+        Unit
+    }
+
+    @Test
+    fun updatePassword_unsafe(vertx: Vertx, vertxTestContext: VertxTestContext) = runBlocking {
+        dbAccess.initialize()
+
+        createNoiseDocument()
+
+        val rawOriginalPassword = "password*@^!&^&^&^@&#^|"
+
+        val user = dbAccess.insertNewUser(
+            userName = "",
+            urlKey = "",
+            avatarKey = "",
+            schoolEmail = "",
+            rawPassword = hashPassword(vertx, rawOriginalPassword)
+        )
+
+        createNoiseDocument()
+
+        val incorrect = "incorrect"
+
+        val newPassword = "newPassword*&*^#@"
+
+        assertFalse(
+            dbAccess.updatePassword(
+                incorrect,
+                newPassword,
+                userId = user.userId
+            )
+        )
+
+        vertxTestContext.completeNow()
 
         Unit
     }
