@@ -381,6 +381,32 @@ internal class DBAccessTest {
         Unit
     }
 
+    @Test
+    fun updateAvatar() = runBlocking {
+        dbAccess.initialize()
+
+        createNoiseDocument()
+
+        val original = dbAccess.insertNewUser(
+            userName = "user-name",
+            urlKey = "user-name",
+            avatarKey = "before",
+            schoolEmail = "",
+            rawPassword = ByteArray(0)
+        )
+
+        createNoiseDocument()
+
+        val answer = "answer"
+        assertTrue(dbAccess.updateAvatar(original.avatarKey, answer, original.userId))
+
+        val after = dbAccess.getUserWithId(original.userId) ?: fail()
+
+        assertEquals(answer, after.avatarKey)
+
+        Unit
+    }
+
     private suspend fun createNoiseDocument() {
         repeat(10) {
             val userName = "user#noise#$it#${random.nextInt()}"

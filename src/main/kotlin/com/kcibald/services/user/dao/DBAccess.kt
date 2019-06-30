@@ -267,6 +267,25 @@ internal class DBAccess(private val vertx: Vertx, private val config: Config) {
         return result.docModified == 1.toLong()
     }
 
+    suspend fun updateAvatar(
+        before: String,
+        after: String,
+        userId: String? = null,
+        urlKey: String? = null
+    ): Boolean {
+        val query = makeUrlKeyOrUserIdQuery(urlKey, userId)
+
+        query.put(avatarFileKey, before)
+
+        val result = dbClient.updateCollectionAwait(
+            userCollectionName,
+            query,
+            jsonObjectOf("\$set" to jsonObjectOf(avatarFileKey to after))
+        )
+
+        return result.docMatched == 1.toLong()
+    }
+
     private fun makeUrlKeyOrUserIdQuery(urlKey: String?, userId: String?): JsonObject {
         if (urlKey == null && userId == null)
             throw IllegalArgumentException("at least urlKey or userId should be non-null")
