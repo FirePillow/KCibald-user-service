@@ -8,7 +8,6 @@ import com.kcibald.services.user.proto.AuthenticationResponse.AuthenticationErro
 import com.kcibald.services.user.proto.AuthenticationResponse.AuthenticationErrorType.Companion.USER_NOT_FOUND
 import com.kcibald.services.user.proto.AuthenticationResponse.Result.*
 import com.kcibald.utils.d
-import io.vertx.core.buffer.Buffer
 import io.vertx.core.eventbus.EventBus
 import io.vertx.core.logging.LoggerFactory
 
@@ -17,10 +16,10 @@ internal class AuthenticationInterface(sharedRuntimeData: SharedRuntimeData) : S
 
     override suspend fun bind(eventBus: EventBus) {
         val eventBusAddress = runtimeData.config[MasterConfigSpec.AuthenticationConfig.event_bus_name]
-        val consumer = eventBus.consumer<Buffer>(eventBusAddress)
+        val consumer = eventBus.consumer<ByteArray>(eventBusAddress)
         consumer.coroutineHandler(runtimeData.vertx, unexpectedErrorResponse) {
             logger.d { "authentication request inbound" }
-            val request = AuthenticationRequest.protoUnmarshal(it.body().bytes)
+            val request = AuthenticationRequest.protoUnmarshal(it.body())
             val email = request.userEmail
             val password = request.plainPassword
 
