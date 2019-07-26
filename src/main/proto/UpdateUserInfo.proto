@@ -1,8 +1,6 @@
 syntax = "proto3";
 package com.kcibald.services.user.proto;
 
-import "Utils.proto";
-
 message UpdateUserInfoRequest {
     oneof queryBy {
         string userId = 1;
@@ -10,12 +8,17 @@ message UpdateUserInfoRequest {
     }
 
     oneof target {
-        SafeUpdateOperation user_name = 3;
-        SafeUpdateOperation signature = 4;
-        SafeUpdateOperation avatar_key = 5;
+        string user_name = 3;
+        string signature = 4;
+        string avatar_key = 5;
         SafeUpdateOperation password = 6;
     }
 
+}
+
+message SafeUpdateOperation {
+    string previous = 1;
+    string after = 2;
 }
 
 message UpdateUserInfoResponse {
