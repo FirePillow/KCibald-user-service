@@ -3,6 +3,7 @@ package com.kcibald.services.user
 import com.kcibald.services.user.dao.DBAccess
 import com.kcibald.services.user.handlers.AuthenticationInterface
 import com.kcibald.services.user.handlers.DescribeUserInterface
+import com.kcibald.services.user.handlers.UpdateUserInfoInterface
 import com.kcibald.utils.i
 import com.uchuhimo.konf.Config
 import io.vertx.core.Vertx
@@ -34,6 +35,8 @@ class UserServiceVerticle : CoroutineVerticle() {
         logger.i { "binding services" }
         AuthenticationInterface(sharedRuntimeData).bind(vertx.eventBus())
         DescribeUserInterface(sharedRuntimeData).bind(vertx.eventBus())
+        UpdateUserInfoInterface(sharedRuntimeData).bind(vertx.eventBus())
+        logger.i { "binding service success" }
     }
 
     internal lateinit var dbaccess: DBAccess
@@ -41,6 +44,7 @@ class UserServiceVerticle : CoroutineVerticle() {
     internal lateinit var sharedRuntimeData: SharedRuntimeData
 
     override suspend fun stop() {
+        super.stop()
     }
 }
 
