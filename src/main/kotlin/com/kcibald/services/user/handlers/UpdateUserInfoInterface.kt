@@ -80,28 +80,29 @@ internal class UpdateUserInfoInterface(runtimeData: SharedRuntimeData) : Service
         }
     }
 
+    private val successProtobufResult = ProtobufEventResult(
+        UpdateUserInfoResponse(
+            UpdateUserInfoResponse.GeneralResponseTypes.SUCCESS
+        )
+    )
+
+    private val unsafeUpdateProtobufResult = ProtobufEventResult(
+        UpdateUserInfoResponse(
+            UpdateUserInfoResponse.GeneralResponseTypes.FAILURE_UNSAFE_UPDATE
+        )
+    )
+
+    private val dbErrorProtobufEventResult = ProtobufEventResult(
+        UpdateUserInfoResponse(
+            UpdateUserInfoResponse.GeneralResponseTypes.DB_ERROR
+        )
+    )
+
+    private val sysErrorProtobufEventResult = ProtobufEventResult(
+        UpdateUserInfoResponse(
+            UpdateUserInfoResponse.GeneralResponseTypes.INTERNAL_ERROR
+        )
+    )
+
+
 }
-
-internal val successProtobufResult = ProtobufEventResult(
-    UpdateUserInfoResponse(
-        UpdateUserInfoResponse.GeneralResponseTypes.SUCCESS
-    )
-)
-
-internal val unsafeUpdateProtobufResult = ProtobufEventResult(
-    UpdateUserInfoResponse(
-        UpdateUserInfoResponse.GeneralResponseTypes.FAILURE_UNSAFE_UPDATE
-    )
-)
-
-internal val dbErrorProtobufEventResult = ProtobufEventResult(
-    UpdateUserInfoResponse(
-        UpdateUserInfoResponse.GeneralResponseTypes.DB_ERROR
-    )
-)
-
-internal val sysErrorProtobufEventResult = ProtobufEventResult(
-    UpdateUserInfoResponse(
-        UpdateUserInfoResponse.GeneralResponseTypes.INTERNAL_ERROR
-    )
-)

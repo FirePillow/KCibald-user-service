@@ -37,13 +37,13 @@ internal class DescribeUserInterface(sharedRuntimeData: SharedRuntimeData) : Ser
         }
     }
 
-    internal suspend fun queryByURLKey(urlKey: String): SafeUser? =
+    private suspend fun queryByURLKey(urlKey: String): SafeUser? =
         runtimeData.dbAccess.getUserWithUrlKey(urlKey)
 
-    internal suspend fun queryByID(id: String): SafeUser? =
+    private suspend fun queryByID(id: String): SafeUser? =
         runtimeData.dbAccess.getUserWithId(id)
 
-    internal suspend fun queryByUserName(userName: String): List<User> {
+    private suspend fun queryByUserName(userName: String): List<User> {
         return runtimeData
             .dbAccess
             .getUserWithName(userName)
