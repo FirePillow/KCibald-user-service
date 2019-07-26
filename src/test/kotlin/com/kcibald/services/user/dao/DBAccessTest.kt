@@ -301,7 +301,7 @@ internal class DBAccessTest {
 
         val newUserName = "new"
 
-        dbAccess.updateUserName(originalUserName, newUserName, userId = id.userId)
+        dbAccess.updateUserName(newUserName, userId = id.userId)
 
         val newUser = dbAccess.getUserWithId(id.userId) ?: fail()
 
@@ -342,7 +342,7 @@ internal class DBAccessTest {
 
         createNoiseDocument()
 
-        assertTrue(dbAccess.updateUserName(originalUserName, overLay, userId = id.userId))
+        assertTrue(dbAccess.updateUserName(overLay, userId = id.userId))
 
         val newUser = dbAccess.getUserWithId(id.userId) ?: fail()
 
@@ -374,7 +374,7 @@ internal class DBAccessTest {
         createNoiseDocument()
 
         val answer = "answer"
-        assertTrue(dbAccess.updateSignature(original.signature, answer, original.userId))
+        assertTrue(dbAccess.updateSignature(answer, userId = original.userId))
 
         val after = dbAccess.getUserWithId(original.userId) ?: fail()
 
@@ -400,7 +400,7 @@ internal class DBAccessTest {
         createNoiseDocument()
 
         val answer = "answer"
-        assertTrue(dbAccess.updateAvatar(original.avatarKey, answer, original.userId))
+        assertTrue(dbAccess.updateAvatar(answer, userId = original.userId))
 
         val after = dbAccess.getUserWithId(original.userId) ?: fail()
 
@@ -461,7 +461,7 @@ internal class DBAccessTest {
             )
         )
 
-        val (_, updatedPassword) = dbAccess.getUserAndPasswordWithEmail(schoolEmail)?: fail()
+        val (_, updatedPassword) = dbAccess.getUserAndPasswordWithEmail(schoolEmail) ?: fail()
 
         assertTrue(passwordMatches(vertx, updatedPassword, newPassword))
 

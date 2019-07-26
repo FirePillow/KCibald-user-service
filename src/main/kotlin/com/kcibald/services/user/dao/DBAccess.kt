@@ -8,6 +8,7 @@ import com.kcibald.utils.w
 import com.mongodb.MongoWriteException
 import com.uchuhimo.konf.Config
 import io.vertx.core.Vertx
+import io.vertx.core.impl.NoStackTraceThrowable
 import io.vertx.core.json.JsonObject
 import io.vertx.core.logging.LoggerFactory
 import io.vertx.ext.mongo.MongoClient
@@ -190,91 +191,103 @@ internal class DBAccess(private val vertx: Vertx, private val config: Config) {
         )
     }
 
-    internal object URLKeyDuplicationException : RuntimeException("key duplication occurs", null, false, false)
+    object URLKeyDuplicationException : RuntimeException("key duplication occurs", null, false, false)
 
     suspend fun updateUserName(
-        before: String,
-        after: String,
+        to: String,
         tolerateUrlKeySpin: Boolean = true,
         userId: String? = null,
         urlKey: String? = null
     ): Boolean {
-        val query = makeUrlKeyOrUserIdQuery(urlKey, userId)
+//        step 1:
+//        update user name
+        val original = dbClient.findOneAndUpdateAwait(
+            userCollectionName,
+            makeUrlKeyOrUserIdQuery(urlKey, userId),
+            jsonObjectOf(
+                "\$set" to jsonObjectOf(
+                    userNameKey to to
+                )
+            )
+        )
+            ?.let { SafeUser.fromDBJson(it) }
+            ?: return false
 
-        query.put(userNameKey, before)
+        if (tolerateUrlKeySpin) {
+//        step 2:
+//        update url key
+            val query = makeUrlKeyOrUserIdQuery(null, original.userId)
 
-        val originalUrlKey = userNameToURLKey(after)
-        var currentUrlKey = originalUrlKey
-        for (i in 1..1000) {
-            try {
-                val result = dbClient.updateCollectionAwait(
-                    userCollectionName,
-                    query,
-                    jsonObjectOf(
-                        "\$set" to jsonObjectOf(
-                            userNameKey to after,
-                            urlKeyKey to currentUrlKey
+            val originalUrlKey = userNameToURLKey(to)
+            var currentUrlKey = originalUrlKey
+            for (i in 1..1000) {
+                try {
+                    val result = dbClient.updateCollectionAwait(
+                        userCollectionName,
+                        query,
+//                    if racing, overwrite it
+                        jsonObjectOf(
+                            "\$set" to jsonObjectOf(
+                                userNameKey to to,
+                                urlKeyKey to currentUrlKey
+                            )
                         )
                     )
-                )
 
-                return result.docModified == 1.toLong()
-            } catch (e: MongoWriteException) {
-                if (e.error.code == 11000) {
-                    if (tolerateUrlKeySpin) {
-                        logger.d { "url key collision for user with name $before, collide url key: $currentUrlKey" }
-                        val previous = currentUrlKey
-                        currentUrlKey = originalUrlKey + "-" + genRandomString(3)
-                        logger.d { "spinning from $previous -> $currentUrlKey" }
+                    assert(result.docMatched != 0.toLong())
+                    return result.docModified == 1.toLong()
+                } catch (e: MongoWriteException) {
+                    if (e.error.code == 11000) {
+                        if (tolerateUrlKeySpin) {
+                            val previous = currentUrlKey
+                            currentUrlKey = originalUrlKey + "-" + genRandomString(3)
+                            logger.d { "spinning from $previous -> $currentUrlKey" }
+                        } else {
+                            throw URLKeyDuplicationException
+                        }
                     } else {
-                        throw URLKeyDuplicationException
+                        throw e
                     }
-                } else {
-                    throw e
                 }
             }
-        }
 
-        val message =
-            "url key spin failed for user name $before when updating user name," +
-                    " target url key $urlKey, current iteration $currentUrlKey"
-        logger.warn(message)
-        throw RuntimeException(message)
+            val message =
+                "url key spin failed for user ${userId ?: urlKey} when updating user name," +
+                        " target url key $urlKey, current iteration $currentUrlKey"
+            logger.warn(message)
+            throw NoStackTraceThrowable(message)
+        } else {
+            return true
+        }
     }
 
     suspend fun updateSignature(
-        before: String,
-        after: String,
+        to: String,
         userId: String? = null,
         urlKey: String? = null
     ): Boolean {
         val query = makeUrlKeyOrUserIdQuery(urlKey, userId)
 
-        query.put(signatureKey, before)
-
         val result = dbClient.updateCollectionAwait(
             userCollectionName,
             query,
-            jsonObjectOf("\$set" to jsonObjectOf(signatureKey to after))
+            jsonObjectOf("\$set" to jsonObjectOf(signatureKey to to))
         )
 
         return result.docModified == 1.toLong()
     }
 
     suspend fun updateAvatar(
-        before: String,
-        after: String,
+        to: String,
         userId: String? = null,
         urlKey: String? = null
     ): Boolean {
         val query = makeUrlKeyOrUserIdQuery(urlKey, userId)
 
-        query.put(avatarFileKey, before)
-
         val result = dbClient.updateCollectionAwait(
             userCollectionName,
             query,
-            jsonObjectOf("\$set" to jsonObjectOf(avatarFileKey to after))
+            jsonObjectOf("\$set" to jsonObjectOf(avatarFileKey to to))
         )
 
         return result.docMatched == 1.toLong()
