@@ -1,7 +1,9 @@
 package com.kcibald.services.user.dao
 
 import com.kcibald.services.user.genRandomString
+import com.kcibald.services.user.hashPassword
 import com.kcibald.services.user.load
+import com.kcibald.services.user.passwordMatches
 import com.uchuhimo.konf.Config
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
@@ -272,6 +274,231 @@ internal class DBAccessTest {
                 )
             }
         }
+
+        Unit
+    }
+
+    @Test
+    fun updateUserName() = runBlocking {
+        dbAccess.initialize()
+
+        createNoiseDocument()
+
+        val originalUserName = "original"
+
+        val id = dbAccess.insertNewUser(
+            userName = originalUserName,
+            signature = "",
+            avatarKey = "",
+            schoolEmail = "",
+            rawPassword = ByteArray(0),
+            urlKey = userNameToURLKey(originalUserName)
+        )
+
+        createNoiseDocument()
+
+        val newUserName = "new"
+
+        dbAccess.updateUserName(newUserName, userId = id.userId)
+
+        val newUser = dbAccess.getUserWithId(id.userId) ?: fail()
+
+        assertEquals(newUserName, newUser.userName)
+        assertEquals(userNameToURLKey(newUserName), newUser.urlKey)
+
+        Unit
+    }
+
+    @Test
+    fun updateUserName_overlap() = runBlocking {
+        dbAccess.initialize()
+
+        createNoiseDocument()
+
+        val overLay = "overlay"
+
+        val overLayOriUrlKey = userNameToURLKey(overLay)
+
+        dbAccess.insertNewUser(
+            userName = overLay,
+            schoolEmail = "",
+            rawPassword = ByteArray(0),
+            urlKey = overLayOriUrlKey,
+            avatarKey = ""
+        )
+
+        val originalUserName = "original"
+
+        val id = dbAccess.insertNewUser(
+            userName = originalUserName,
+            signature = "",
+            avatarKey = "",
+            schoolEmail = "",
+            rawPassword = ByteArray(0),
+            urlKey = userNameToURLKey(originalUserName)
+        )
+
+        createNoiseDocument()
+
+        assertTrue(dbAccess.updateUserName(overLay, userId = id.userId))
+
+        val newUser = dbAccess.getUserWithId(id.userId) ?: fail()
+
+        assertEquals(overLay, newUser.userName)
+        assertNotEquals(overLayOriUrlKey, newUser.urlKey)
+        assertTrue(
+            newUser.urlKey.startsWith("$overLayOriUrlKey-"),
+            "incorrect url key spin replacement, get ${newUser.urlKey}"
+        )
+
+        Unit
+    }
+
+    @Test
+    fun updateSignature() = runBlocking {
+        dbAccess.initialize()
+
+        createNoiseDocument()
+
+        val original = dbAccess.insertNewUser(
+            userName = "user-name",
+            urlKey = "user-name",
+            signature = "before",
+            avatarKey = "",
+            schoolEmail = "",
+            rawPassword = ByteArray(0)
+        )
+
+        createNoiseDocument()
+
+        val answer = "answer"
+        assertTrue(dbAccess.updateSignature(answer, userId = original.userId))
+
+        val after = dbAccess.getUserWithId(original.userId) ?: fail()
+
+        assertEquals(answer, after.signature)
+
+        Unit
+    }
+
+    @Test
+    fun updateAvatar() = runBlocking {
+        dbAccess.initialize()
+
+        createNoiseDocument()
+
+        val original = dbAccess.insertNewUser(
+            userName = "user-name",
+            urlKey = "user-name",
+            avatarKey = "before",
+            schoolEmail = "",
+            rawPassword = ByteArray(0)
+        )
+
+        createNoiseDocument()
+
+        val answer = "answer"
+        assertTrue(dbAccess.updateAvatar(answer, userId = original.userId))
+
+        val after = dbAccess.getUserWithId(original.userId) ?: fail()
+
+        assertEquals(answer, after.avatarKey)
+
+        Unit
+    }
+
+    @Test
+    fun updateAvatar_unsafe() = runBlocking {
+        dbAccess.initialize()
+
+        createNoiseDocument()
+
+        val original = dbAccess.insertNewUser(
+            userName = "",
+            urlKey = "",
+            avatarKey = "",
+            schoolEmail = "",
+            rawPassword = ByteArray(0)
+        )
+
+        createNoiseDocument()
+
+        assertFalse(dbAccess.updateAvatar("before", "after", original.userId))
+
+        Unit
+    }
+
+    @Test
+    fun updatePassword(vertx: Vertx, vertxTestContext: VertxTestContext) = runBlocking {
+        dbAccess.initialize()
+
+        createNoiseDocument()
+
+        val rawOriginalPassword = "password*@^!&^&^&^@&#^|"
+        val rawOriginal = hashPassword(vertx, rawOriginalPassword)
+
+        val schoolEmail = "school@email"
+
+        val user = dbAccess.insertNewUser(
+            userName = "",
+            urlKey = "",
+            avatarKey = "",
+            schoolEmail = schoolEmail,
+            rawPassword = rawOriginal
+        )
+
+        createNoiseDocument()
+
+        val newPassword = "newPassword*&*^#@"
+
+        assertTrue(
+            dbAccess.updatePassword(
+                rawOriginalPassword,
+                newPassword,
+                userId = user.userId
+            )
+        )
+
+        val (_, updatedPassword) = dbAccess.getUserAndPasswordWithEmail(schoolEmail) ?: fail()
+
+        assertTrue(passwordMatches(vertx, updatedPassword, newPassword))
+
+        vertxTestContext.completeNow()
+
+        Unit
+    }
+
+    @Test
+    fun updatePassword_unsafe(vertx: Vertx, vertxTestContext: VertxTestContext) = runBlocking {
+        dbAccess.initialize()
+
+        createNoiseDocument()
+
+        val rawOriginalPassword = "password*@^!&^&^&^@&#^|"
+
+        val user = dbAccess.insertNewUser(
+            userName = "",
+            urlKey = "",
+            avatarKey = "",
+            schoolEmail = "",
+            rawPassword = hashPassword(vertx, rawOriginalPassword)
+        )
+
+        createNoiseDocument()
+
+        val incorrect = "incorrect"
+
+        val newPassword = "newPassword*&*^#@"
+
+        assertFalse(
+            dbAccess.updatePassword(
+                incorrect,
+                newPassword,
+                userId = user.userId
+            )
+        )
+
+        vertxTestContext.completeNow()
 
         Unit
     }

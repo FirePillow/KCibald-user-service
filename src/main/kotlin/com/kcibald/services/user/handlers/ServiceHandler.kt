@@ -1,7 +1,6 @@
 package com.kcibald.services.user.handlers
 
 import com.kcibald.services.user.SharedRuntimeData
-import com.kcibald.services.user.UserServiceVerticle
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.eventbus.EventBus
 import io.vertx.core.eventbus.Message
@@ -50,7 +49,7 @@ internal inline class ProtobufEventResult<T : pbandk.Message<T>>(
 ): EventResult {
     override fun reply(message: Message<*>) {
         val payload = this.message.protoMarshal()
-        message.reply(Buffer.buffer(payload))
+        message.reply(payload)
     }
 
 }

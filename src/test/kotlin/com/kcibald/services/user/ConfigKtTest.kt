@@ -1,6 +1,5 @@
 package com.kcibald.services.user
 
-import com.kcibald.services.user.dao.urlKeyKey
 import com.uchuhimo.konf.Config
 import io.vertx.core.json.JsonObject
 import io.vertx.kotlin.core.json.jsonObjectOf
@@ -27,7 +26,7 @@ internal class ConfigKtTest {
         }
     """.trimIndent()
 
-    val config = Config { addSpec(MasterConfigSpec) }
+    private val config = Config { addSpec(MasterConfigSpec) }
         .from.json.string(passJson)
 
     @Test
@@ -51,13 +50,8 @@ internal class ConfigKtTest {
     }
 
     @Test
-    fun user_collection_unique_index() {
-        assertEquals(mapOf(urlKeyKey to 1), config[MasterConfigSpec.UserCollection.unique_indexes])
-    }
-
-    @Test
     fun user_collection_index() {
-        assertEquals(mapOf(urlKeyKey to 1), config[MasterConfigSpec.UserCollection.unique_indexes])
+        assertEquals(mapOf<String, String>() , config[MasterConfigSpec.UserCollection.indexes])
     }
 
     /**
@@ -96,14 +90,16 @@ internal class ConfigKtTest {
     @Test
     fun overload_JsonConfig() {
         val answer = "new_collection_name"
-        val json = JsonObject("""
+        val json = JsonObject(
+            """
             {
                 "user_collection": {
                   "collection_name": "new_collection_name",
                   "indexes": {}
                 }
             }
-        """.trimIndent())
+        """.trimIndent()
+        )
         val load = load(json)
         assertEquals(answer, load[MasterConfigSpec.UserCollection.collection_name])
     }

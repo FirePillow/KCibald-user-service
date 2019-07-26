@@ -19,16 +19,16 @@ internal object MasterConfigSpec : ConfigSpec("") {
         val event_bus_name by optional("kcibald.user.describe")
     }
 
+    internal object UpdateUserInfoConfig : ConfigSpec("update_user") {
+        val event_bus_name by optional("kcibald.user.update.general")
+    }
+
     internal object UserCollection : ConfigSpec("user_collection") {
         val collection_name by optional("users")
         val indexes by optional(
             mapOf(
                 "$emailKey.$emailAddressKey" to 1,
-                userNameKey to 1
-            )
-        )
-        val unique_indexes by optional(
-            mapOf(
+                userNameKey to 1,
                 urlKeyKey to 1
             )
         )

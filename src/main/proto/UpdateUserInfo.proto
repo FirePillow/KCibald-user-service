@@ -1,0 +1,33 @@
+syntax = "proto3";
+package com.kcibald.services.user.proto;
+
+message UpdateUserInfoRequest {
+    oneof queryBy {
+        string userId = 1;
+        string url_key = 2;
+    }
+
+    oneof target {
+        string user_name = 3;
+        string signature = 4;
+        string avatar_key = 5;
+        SafeUpdateOperation password = 6;
+    }
+
+}
+
+message SafeUpdateOperation {
+    string previous = 1;
+    string after = 2;
+}
+
+message UpdateUserInfoResponse {
+    GeneralResponseTypes responseType = 1;
+
+    enum GeneralResponseTypes {
+        SUCCESS = 0;
+        FAILURE_UNSAFE_UPDATE = 1;
+        DB_ERROR = 2;
+        INTERNAL_ERROR = 3;
+    }
+}
