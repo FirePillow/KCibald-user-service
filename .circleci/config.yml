@@ -41,5 +41,5 @@ jobs:
       - run: gradle test jacocoTestReport
 
       - codecov/upload:
-          flags: objs,backend,unittest
+          flags: backend
           file: "build/reports/jacoco/test/jacocoTestReport.xml"

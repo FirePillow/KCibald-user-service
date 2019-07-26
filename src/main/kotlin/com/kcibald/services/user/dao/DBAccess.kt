@@ -1,9 +1,6 @@
 package com.kcibald.services.user.dao
 
-import com.kcibald.services.user.MasterConfigSpec
-import com.kcibald.services.user.encodeDBIDFromUserId
-import com.kcibald.services.user.encodeUserIdFromDBID
-import com.kcibald.services.user.genRandomString
+import com.kcibald.services.user.*
 import com.kcibald.utils.d
 import com.kcibald.utils.i
 import com.kcibald.utils.immutable
@@ -11,19 +8,17 @@ import com.kcibald.utils.w
 import com.mongodb.MongoWriteException
 import com.uchuhimo.konf.Config
 import io.vertx.core.Vertx
+import io.vertx.core.impl.NoStackTraceThrowable
 import io.vertx.core.json.JsonObject
 import io.vertx.core.logging.LoggerFactory
 import io.vertx.ext.mongo.MongoClient
-import io.vertx.kotlin.core.json.json
-import io.vertx.kotlin.core.json.jsonArrayOf
-import io.vertx.kotlin.core.json.jsonObjectOf
-import io.vertx.kotlin.core.json.obj
+import io.vertx.kotlin.core.json.*
 import io.vertx.kotlin.ext.mongo.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.*
 
-internal class DBAccess(vertx: Vertx, private val config: Config) {
+internal class DBAccess(private val vertx: Vertx, private val config: Config) {
 
     internal val dbClient =
         MongoClient.createShared(
@@ -65,13 +60,12 @@ internal class DBAccess(vertx: Vertx, private val config: Config) {
             logger.i { "indexes empty, not creating indexes" }
         }
         logger.i { "creating unique index on user collection (name: $userCollectionName)" }
-        val uniqueIndexes = config[MasterConfigSpec.UserCollection.unique_indexes]
-        if (uniqueIndexes.isNotEmpty()) {
-            val indexQuery = JsonObject(uniqueIndexes)
-            val indexOption = indexOptionsOf().unique(true)
-            dbClient.createIndexWithOptionsAwait(userCollectionName, indexQuery, indexOption)
-            logger.i { "unique index empty, not creating unique indexes" }
-        }
+        val indexQuery = jsonObjectOf(
+            urlKeyKey to 1
+        )
+        val indexOption = indexOptionsOf().unique(true)
+        dbClient.createIndexWithOptionsAwait(userCollectionName, indexQuery, indexOption)
+        logger.i { "unique index empty, not creating unique indexes" }
         logger.i { "DBAccess initialization complete" }
     }
 
@@ -197,9 +191,151 @@ internal class DBAccess(vertx: Vertx, private val config: Config) {
         )
     }
 
-    internal object URLKeyDuplicationException : Throwable()
+    object URLKeyDuplicationException : RuntimeException("key duplication occurs", null, false, false)
 
-    @Suppress("RedundantSuspendModifier")
+    suspend fun updateUserName(
+        to: String,
+        tolerateUrlKeySpin: Boolean = true,
+        userId: String? = null,
+        urlKey: String? = null
+    ): Boolean {
+//        step 1:
+//        update user name
+        val original = dbClient.findOneAndUpdateAwait(
+            userCollectionName,
+            makeUrlKeyOrUserIdQuery(urlKey, userId),
+            jsonObjectOf(
+                "\$set" to jsonObjectOf(
+                    userNameKey to to
+                )
+            )
+        )
+            ?.let { SafeUser.fromDBJson(it) }
+            ?: return false
+
+        if (tolerateUrlKeySpin) {
+//        step 2:
+//        update url key
+            val query = makeUrlKeyOrUserIdQuery(null, original.userId)
+
+            val originalUrlKey = userNameToURLKey(to)
+            var currentUrlKey = originalUrlKey
+            for (i in 1..1000) {
+                try {
+                    val result = dbClient.updateCollectionAwait(
+                        userCollectionName,
+                        query,
+//                    if racing, overwrite it
+                        jsonObjectOf(
+                            "\$set" to jsonObjectOf(
+                                userNameKey to to,
+                                urlKeyKey to currentUrlKey
+                            )
+                        )
+                    )
+
+                    assert(result.docMatched != 0.toLong())
+                    return result.docModified == 1.toLong()
+                } catch (e: MongoWriteException) {
+                    if (e.error.code == 11000) {
+                        if (tolerateUrlKeySpin) {
+                            val previous = currentUrlKey
+                            currentUrlKey = originalUrlKey + "-" + genRandomString(3)
+                            logger.d { "spinning from $previous -> $currentUrlKey" }
+                        } else {
+                            throw URLKeyDuplicationException
+                        }
+                    } else {
+                        throw e
+                    }
+                }
+            }
+
+            val message =
+                "url key spin failed for user ${userId ?: urlKey} when updating user name," +
+                        " target url key $urlKey, current iteration $currentUrlKey"
+            logger.warn(message)
+            throw NoStackTraceThrowable(message)
+        } else {
+            return true
+        }
+    }
+
+    suspend fun updateSignature(
+        to: String,
+        userId: String? = null,
+        urlKey: String? = null
+    ): Boolean {
+        val query = makeUrlKeyOrUserIdQuery(urlKey, userId)
+
+        val result = dbClient.updateCollectionAwait(
+            userCollectionName,
+            query,
+            jsonObjectOf("\$set" to jsonObjectOf(signatureKey to to))
+        )
+
+        return result.docModified == 1.toLong()
+    }
+
+    suspend fun updateAvatar(
+        to: String,
+        userId: String? = null,
+        urlKey: String? = null
+    ): Boolean {
+        val query = makeUrlKeyOrUserIdQuery(urlKey, userId)
+
+        val result = dbClient.updateCollectionAwait(
+            userCollectionName,
+            query,
+            jsonObjectOf("\$set" to jsonObjectOf(avatarFileKey to to))
+        )
+
+        return result.docMatched == 1.toLong()
+    }
+
+    suspend fun updatePassword(
+        before: String,
+        after: String,
+        userId: String? = null,
+        urlKey: String? = null
+    ): Boolean {
+        val query = makeUrlKeyOrUserIdQuery(urlKey, userId)
+
+        val original = dbClient.findOneAwait(
+            userCollectionName,
+            query,
+            jsonObjectOf(passwordHashKey to 1)
+        ) ?: return false
+
+        val originalId: String = original["_id"]
+        val originalPassword: String = original[passwordHashKey]
+        val hash = Base64.getDecoder().decode(originalPassword)
+
+        if (!passwordMatches(vertx, hash, before))
+            return false
+
+        val result = dbClient.updateCollectionAwait(
+            userCollectionName,
+            jsonObjectOf(
+                "_id" to originalId,
+                passwordHashKey to originalPassword
+            ),
+            jsonObjectOf("\$set" to jsonObjectOf(passwordHashKey to hashPassword(vertx, after)))
+        )
+
+        return result.docMatched == 1.toLong()
+    }
+
+    private fun makeUrlKeyOrUserIdQuery(urlKey: String?, userId: String?): JsonObject {
+        if (urlKey == null && userId == null)
+            throw IllegalArgumentException("at least urlKey or userId should be non-null")
+
+        return if (urlKey != null)
+            jsonObjectOf(urlKeyKey to urlKey)
+        else
+            jsonObjectOf("_id" to encodeDBIDFromUserId(userId!!))
+    }
+
     suspend fun close() {
         withContext(Dispatchers.IO) {
             dbClient.close()

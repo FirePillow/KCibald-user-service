@@ -1,5 +1,6 @@
 package com.kcibald.services.user
 
+import at.favre.lib.crypto.bcrypt.BCrypt
 import com.kcibald.services.user.dao.SafeUser
 import com.kcibald.services.user.handlers.EventResult
 import io.vertx.core.Vertx
@@ -8,6 +9,7 @@ import io.vertx.core.eventbus.MessageConsumer
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.core.logging.LoggerFactory
+import io.vertx.kotlin.core.executeBlockingAwait
 import io.vertx.kotlin.coroutines.dispatcher
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -122,3 +124,27 @@ private fun process(value: Any?): Any? {
         else -> value.toString()
     }
 }
+
+private val bcryptVerifier = BCrypt.verifyer()!!
+
+internal suspend fun passwordMatches(vertx: Vertx, hash: ByteArray, given: String): Boolean {
+    val result = vertx.executeBlockingAwait<BCrypt.Result> { future ->
+        future.complete(
+            bcryptVerifier.verify(given.toByteArray(), hash)
+        )
+    }!!
+
+    if (!result.validFormat)
+        throw AssertionError("invalid bcrypt format, format error message: ${result.formatErrorMessage}")
+    else
+        return result.verified
+}
+
+private val bcryptMaker = BCrypt.withDefaults()!!
+
+internal suspend fun hashPassword(vertx: Vertx, password: String): ByteArray =
+    vertx.executeBlockingAwait<ByteArray> { future ->
+        future.complete(
+            bcryptMaker.hash(8, password.toByteArray())
+        )
+    }!!

@@ -1,0 +1,18 @@
+coverage:
+  ignore:
+    - "com/kcibald/services/user/proto/**"
+  status:
+    project:
+      default:
+        # basic
+        target: 0
+        threshold: null
+        base: auto
+        # advanced
+        branches: null
+        if_no_uploads: error
+        if_not_found: success
+        if_ci_failed: error
+        only_pulls: false
+        flags: null
+        paths: null
