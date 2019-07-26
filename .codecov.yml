@@ -1,4 +1,6 @@
 coverage:
+  ignore:
+    - "com/kcibald/services/user/proto/**"
   status:
     project:
       default:
