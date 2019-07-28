@@ -6,8 +6,8 @@ import com.kcibald.services.user.proto.AuthenticationResponse
 import com.kcibald.services.user.proto.AuthenticationResponse.AuthenticationErrorType.Companion.INVALID_CREDENTIAL
 import com.kcibald.services.user.proto.AuthenticationResponse.AuthenticationErrorType.Companion.USER_NOT_FOUND
 import com.kcibald.services.user.proto.AuthenticationResponse.Result.*
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 internal class AuthenticationInterfaceKtTest {
@@ -67,6 +67,24 @@ internal class AuthenticationInterfaceKtTest {
         result as SystemErrorMessage
 
         assertEquals("database error", result.systemErrorMessage)
+    }
+
+    @Test
+    @Disabled("NOT Implemented")
+    fun process_success() {
+        fail<Unit>("NOT Implemented")
+    }
+
+    @Test
+    @Disabled("NOT Implemented")
+    fun process_credential_incorrect() {
+        fail<Unit>("NOT Implemented")
+    }
+
+    @Test
+    @Disabled("NOT Implemented")
+    fun process_credential_not_found() {
+        fail<Unit>("NOT Implemented")
     }
 
 }

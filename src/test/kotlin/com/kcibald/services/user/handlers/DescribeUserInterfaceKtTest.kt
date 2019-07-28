@@ -2,8 +2,8 @@ package com.kcibald.services.user.handlers
 
 import com.kcibald.services.user.dao.SafeUser
 import com.kcibald.services.user.proto.DescribeUserResponse
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 class DescribeUserInterfaceKtTest {
@@ -113,6 +113,30 @@ class DescribeUserInterfaceKtTest {
         result.multiUserResult.result.forEach {
             assertTrue(list.remove(it))
         }
+    }
+
+    @Test
+    @Disabled("NOT Implemented")
+    fun process_urlKey() {
+        fail<Unit>("NOT Implemented")
+    }
+
+    @Test
+    @Disabled("NOT Implemented")
+    fun process_id() {
+        fail<Unit>("NOT Implemented")
+    }
+
+    @Test
+    @Disabled("NOT Implemented")
+    fun process_username_single() {
+        fail<Unit>("NOT Implemented")
+    }
+
+    @Test
+    @Disabled("NOT Implemented")
+    fun process_username_muti() {
+        fail<Unit>("NOT Implemented")
     }
 
     private fun com.kcibald.services.user.proto.User.assertEqualsTo(user: SafeUser) {
