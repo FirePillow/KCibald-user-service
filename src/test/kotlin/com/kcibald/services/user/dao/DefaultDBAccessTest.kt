@@ -22,12 +22,12 @@ import java.util.*
 import kotlin.collections.LinkedHashSet
 
 @ExtendWith(VertxExtension::class)
-internal class DBAccessTest {
+internal class DefaultDBAccessTest {
 
     @BeforeEach
     fun setUpConfig(vertx: Vertx) = runBlocking {
         config = load(JsonObject())
-        dbAccess = DBAccess(vertx, config)
+        dbAccess = DefaultDBAccess(vertx, config)
         dbClient = dbAccess.dbClient
         dbClient.dropCollectionAwait(dbAccess.userCollectionName)
     }
@@ -39,13 +39,13 @@ internal class DBAccessTest {
     }
 
     lateinit var config: Config
-    lateinit var dbAccess: DBAccess
+    lateinit var dbAccess: DefaultDBAccess
     lateinit var dbClient: MongoClient
     val random = Random()
 
     @Test
     fun userCollectionName(vertx: Vertx, context: VertxTestContext) {
-        val dbAccess = DBAccess(vertx, config)
+        val dbAccess = DefaultDBAccess(vertx, config)
         assertEquals("users_collection", dbAccess.userCollectionName)
         context.completeNow()
     }
