@@ -15,7 +15,7 @@ def vertxVersion = "3.7.0"
 def junitVersion = "5.4.2"
 
 dependencies {
-    implementation 'com.github.FirePillow:KCIbald-shared-obj:92a2b1db63'
+    implementation 'com.github.FirePillow:KCIbald-shared-obj:v1.0.0-alpha.2'
 
 //    logging
     compile 'ch.qos.logback:logback-classic:1.3.0-alpha4'
