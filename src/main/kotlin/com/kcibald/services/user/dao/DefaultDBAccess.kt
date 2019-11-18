@@ -78,7 +78,7 @@ internal class DefaultDBAccess constructor(private val vertx: Vertx, private val
         val dbId = encodeDBIDFromUserId(id)
         val query = JsonObject(Collections.singletonMap("_id", dbId) as Map<String, Any>)
         val jsonObject = dbClient.findOneAwait(userCollectionName, query, userFieldProjection)
-        return jsonObject?.let { SafeUser.fromDBJson(it) }
+        return jsonObject?.let(SafeUser.Companion::fromDBJson)
     }
 
     override suspend fun getUserWithName(name: String): List<SafeUser> {
@@ -89,7 +89,7 @@ internal class DefaultDBAccess constructor(private val vertx: Vertx, private val
             ) as Map<String, Any>
         )
         val jsonObject = dbClient.findAwait(userCollectionName, query)
-        return jsonObject.map { SafeUser.fromDBJson(it) }
+        return jsonObject.map(SafeUser.Companion::fromDBJson)
     }
 
     override suspend fun getUserWithUrlKey(urlKey: String): SafeUser? {
@@ -100,7 +100,7 @@ internal class DefaultDBAccess constructor(private val vertx: Vertx, private val
             ) as Map<String, Any>
         )
         val dbResult = dbClient.findOneAwait(userCollectionName, query, userFieldProjection)
-        return dbResult?.let { SafeUser.fromDBJson(it) }
+        return dbResult?.let(SafeUser.Companion::fromDBJson)
     }
 
     override suspend fun getUserAndPasswordWithEmail(email: String): Pair<SafeUser, ByteArray>? {
@@ -143,7 +143,7 @@ internal class DefaultDBAccess constructor(private val vertx: Vertx, private val
                 )
             )
         )
-            ?.let { SafeUser.fromDBJson(it) }
+            ?.let(SafeUser.Companion::fromDBJson)
             ?: return false
 
         if (tolerateUrlKeySpin) {
