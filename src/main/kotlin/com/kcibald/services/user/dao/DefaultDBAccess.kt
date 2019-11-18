@@ -165,7 +165,7 @@ internal class DefaultDBAccess constructor(private val vertx: Vertx, private val
                                 urlKeyKey to currentUrlKey
                             )
                         )
-                    )
+                    )!!
 
                     assert(result.docMatched != 0.toLong())
                     return result.docModified == 1.toLong()
@@ -205,7 +205,7 @@ internal class DefaultDBAccess constructor(private val vertx: Vertx, private val
             userCollectionName,
             query,
             jsonObjectOf("\$set" to jsonObjectOf(signatureKey to to))
-        )
+        )!!
 
         return result.docModified == 1.toLong()
     }
@@ -221,7 +221,7 @@ internal class DefaultDBAccess constructor(private val vertx: Vertx, private val
             userCollectionName,
             query,
             jsonObjectOf("\$set" to jsonObjectOf(avatarFileKey to to))
-        )
+        )!!
 
         return result.docMatched == 1.toLong()
     }
@@ -261,7 +261,7 @@ internal class DefaultDBAccess constructor(private val vertx: Vertx, private val
                     )
                 )
             )
-        )
+        )!!
 
         return result.docMatched == 1.toLong()
     }
