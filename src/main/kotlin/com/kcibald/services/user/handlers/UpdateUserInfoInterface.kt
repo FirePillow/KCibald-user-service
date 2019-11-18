@@ -8,6 +8,7 @@ import com.kcibald.services.user.proto.UpdateUserInfoResponse
 import com.kcibald.utils.i
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.eventbus.EventBus
+import io.vertx.core.eventbus.Message
 import io.vertx.core.logging.LoggerFactory
 
 internal class UpdateUserInfoInterface(runtimeData: SharedRuntimeData) : ServiceInterface(runtimeData) {
@@ -17,38 +18,58 @@ internal class UpdateUserInfoInterface(runtimeData: SharedRuntimeData) : Service
     override suspend fun bind(eventBus: EventBus) {
         val eventBusAddress = runtimeData.config[MasterConfigSpec.UpdateUserInfoConfig.event_bus_name]
         val consumer = eventBus.consumer<Buffer>(eventBusAddress)
-        consumer.coroutineHandler(runtimeData.vertx, sysErrorProtobufEventResult) {
-            logger.i { "registering Update User Interface on event bus address: $eventBusAddress" }
-            val request = UpdateUserInfoRequest.protoUnmarshal(it.body().bytes)
-            return@coroutineHandler when (val target = request.target) {
-                is UpdateUserInfoRequest.Target.UserName ->
-                    doUpdateInternal(request.queryBy) { userId, urlKey ->
-                        dbAccess.updateUserName(target.userName, userId = userId, urlKey = urlKey)
-                    }
-                is UpdateUserInfoRequest.Target.Signature ->
-                    doUpdateInternal(request.queryBy) { userId, urlKey ->
-                        dbAccess.updateSignature(target.signature, userId = userId, urlKey = urlKey)
-                    }
+        logger.i { "registering Update User Interface on event bus address: $eventBusAddress" }
+        consumer.coroutineHandler(runtimeData.vertx, sysErrorProtobufEventResult, ::handleEvent)
+    }
 
-                is UpdateUserInfoRequest.Target.AvatarKey ->
-                    doUpdateInternal(request.queryBy) { userId, urlKey ->
-                        dbAccess.updateUserName(target.avatarKey, userId = userId, urlKey = urlKey)
-                    }
-
-                is UpdateUserInfoRequest.Target.Password ->
-                    doUpdateInternal(request.queryBy) { userId, urlKey ->
-                        val (before, after) = target.password
-                        dbAccess.updatePassword(
-                            before,
-                            after,
-                            userId = userId,
-                            urlKey = urlKey
-                        )
-                    }
-                else ->
-                    throw AssertionError("should not reach here")
-            }
+    private suspend fun handleEvent(message: Message<Buffer>): EventResult {
+        val request = UpdateUserInfoRequest.protoUnmarshal(message.body().bytes)
+        return when (val target = request.target) {
+            is UpdateUserInfoRequest.Target.UserName ->
+                updateUserName(request, target)
+            is UpdateUserInfoRequest.Target.Signature ->
+                updateSignature(request, target)
+            is UpdateUserInfoRequest.Target.AvatarKey ->
+                updateAvatarKey(request, target)
+            is UpdateUserInfoRequest.Target.Password ->
+                updatePassword(request, target)
+            else ->
+                throw AssertionError("should not reach here")
         }
+    }
+
+    private suspend fun updatePassword(
+        request: UpdateUserInfoRequest,
+        target: UpdateUserInfoRequest.Target.Password
+    ): ProtobufEventResult<UpdateUserInfoResponse> = doUpdateInternal(request.queryBy) { userId, urlKey ->
+        val (before, after) = target.password
+        dbAccess.updatePassword(
+            before,
+            after,
+            userId = userId,
+            urlKey = urlKey
+        )
+    }
+
+    private suspend fun updateAvatarKey(
+        request: UpdateUserInfoRequest,
+        target: UpdateUserInfoRequest.Target.AvatarKey
+    ): ProtobufEventResult<UpdateUserInfoResponse> = doUpdateInternal(request.queryBy) { userId, urlKey ->
+        dbAccess.updateAvatar(target.avatarKey, userId = userId, urlKey = urlKey)
+    }
+
+    private suspend fun updateSignature(
+        request: UpdateUserInfoRequest,
+        target: UpdateUserInfoRequest.Target.Signature
+    ): ProtobufEventResult<UpdateUserInfoResponse> = doUpdateInternal(request.queryBy) { userId, urlKey ->
+        dbAccess.updateSignature(target.signature, userId = userId, urlKey = urlKey)
+    }
+
+    private suspend fun updateUserName(
+        request: UpdateUserInfoRequest,
+        target: UpdateUserInfoRequest.Target.UserName
+    ): ProtobufEventResult<UpdateUserInfoResponse> = doUpdateInternal(request.queryBy) { userId, urlKey ->
+        dbAccess.updateUserName(target.userName, userId = userId, urlKey = urlKey)
     }
 
     private inline fun doUpdateInternal(
@@ -58,14 +79,14 @@ internal class UpdateUserInfoInterface(runtimeData: SharedRuntimeData) : Service
         var userId: String? = null
         var urlKey: String? = null
         when (queryBy) {
-            is UpdateUserInfoRequest.QueryBy.UserId -> {
+            is UpdateUserInfoRequest.QueryBy.UserId ->
                 userId = queryBy.userId
-            }
-            is UpdateUserInfoRequest.QueryBy.UrlKey -> {
+            is UpdateUserInfoRequest.QueryBy.UrlKey ->
                 urlKey = queryBy.urlKey
-            }
-            null -> throw NullPointerException()
+            null ->
+                throw NullPointerException()
         }
+
         val success = try {
             block(userId, urlKey)
         } catch (e: Exception) {
