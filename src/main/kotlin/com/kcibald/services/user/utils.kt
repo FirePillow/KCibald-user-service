@@ -41,7 +41,7 @@ internal inline fun <IN> MessageConsumer<IN>.coroutineHandler(
             try {
                 val result = block(it)
                 result.reply(it)
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 utilLogger.warn("unexpected failure at coroutineHandler, exception: $e", e)
                 if (unexpectedFailureMessage != null) {
                     unexpectedFailureMessage.reply(it)
