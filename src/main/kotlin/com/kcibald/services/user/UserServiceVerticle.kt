@@ -28,7 +28,7 @@ class UserServiceVerticle : CoroutineVerticle() {
         dbaccess.initialize()
         logger.i { "database initialization complete" }
 
-        sharedRuntimeData = SharedRuntimeData(this, config, dbaccess, this.deploymentID)
+        sharedRuntimeData = SharedRuntimeData(this.vertx, config, dbaccess)
 
         logger.i { "binding services" }
         AuthenticationInterface(sharedRuntimeData).bind(vertx.eventBus())
@@ -47,11 +47,7 @@ class UserServiceVerticle : CoroutineVerticle() {
 }
 
 internal class SharedRuntimeData(
-    val verticle: UserServiceVerticle,
+    val vertx: Vertx,
     val config: Config,
-    val dbAccess: DBAccess,
-    val deploymentID: String
-) {
-    val vertx: Vertx
-        get() = verticle.vertx
-}
+    val dbAccess: DBAccess
+)
