@@ -6,7 +6,6 @@ import com.kcibald.services.user.coroutineHandler
 import com.kcibald.services.user.proto.UpdateUserInfoRequest
 import com.kcibald.services.user.proto.UpdateUserInfoResponse
 import com.kcibald.utils.i
-import io.vertx.core.buffer.Buffer
 import io.vertx.core.eventbus.EventBus
 import io.vertx.core.eventbus.Message
 import io.vertx.core.logging.LoggerFactory
@@ -17,13 +16,13 @@ internal class UpdateUserInfoInterface(runtimeData: SharedRuntimeData) : Service
 
     override suspend fun bind(eventBus: EventBus) {
         val eventBusAddress = runtimeData.config[MasterConfigSpec.UpdateUserInfoConfig.event_bus_name]
-        val consumer = eventBus.consumer<Buffer>(eventBusAddress)
+        val consumer = eventBus.consumer<ByteArray>(eventBusAddress)
         logger.i { "registering Update User Interface on event bus address: $eventBusAddress" }
         consumer.coroutineHandler(runtimeData.vertx, sysErrorProtobufEventResult, ::handleEvent)
     }
 
-    private suspend fun handleEvent(message: Message<Buffer>): EventResult {
-        val request = UpdateUserInfoRequest.protoUnmarshal(message.body().bytes)
+    private suspend fun handleEvent(message: Message<ByteArray>): EventResult {
+        val request = UpdateUserInfoRequest.protoUnmarshal(message.body())
         return when (val target = request.target) {
             is UpdateUserInfoRequest.Target.UserName ->
                 updateUserName(request, target)
