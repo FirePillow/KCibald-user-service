@@ -667,4 +667,19 @@ internal class UtilsKtTest {
         Unit
     }
 
+    @Test
+    fun password_invalid(vertx: Vertx, context: VertxTestContext) = runBlocking {
+        val password = "password*&#\$@#831K"
+        val wronglyHash = "not a hash".toByteArray()
+        try {
+//            cannot warp it in assertThrows because of coroutine
+            passwordMatches(vertx, wronglyHash, password)
+        } catch (e: AssertionError) {
+            context.completeNow()
+            return@runBlocking
+        }
+        fail<Unit>("should throw AssertionError")
+        Unit
+    }
+
 }
