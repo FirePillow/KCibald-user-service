@@ -30,7 +30,7 @@ dependencies {
     compile 'at.favre.lib:bcrypt:0.8.0'
 
 //    object id parsing
-    compile group: 'commons-codec', name: 'commons-codec', version: '1.13'
+    compile group: 'commons-codec', name: 'commons-codec', version: '1.14'
 
     compile 'com.github.cretz.pbandk:pbandk-runtime-jvm:0.3.0'
 
