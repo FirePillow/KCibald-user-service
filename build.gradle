@@ -24,7 +24,7 @@ dependencies {
     compile 'com.uchuhimo:konf:0.13.3'
 
 //    Hex util classes
-    compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.64'
+    compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.66'
 
 //    bcrypt
     compile 'at.favre.lib:bcrypt:0.8.0'
