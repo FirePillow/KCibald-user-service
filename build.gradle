@@ -11,7 +11,7 @@ repositories {
     maven { url 'https://jitpack.io' }
 }
 
-def vertxVersion = "3.8.3"
+def vertxVersion = "3.9.3"
 def junitVersion = "5.5.2"
 
 dependencies {
